@@ -3,12 +3,16 @@ from __future__ import annotations
 import hashlib
 import json
 from pathlib import Path
+from collections import deque
 from typing import Any
+from urllib.parse import urljoin, urlparse
 
 from langchain_core.documents import Document
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from pypdf import PdfReader
 from pptx import Presentation
+import requests
+from bs4 import BeautifulSoup
 
 from .config import Settings
 from .vectorstore import get_vector_store
@@ -73,6 +77,77 @@ def _build_documents(path: Path, source_id: str, text: str) -> list[Document]:
             },
         )
     ]
+
+
+def _website_chunks_to_documents(url: str, text: str, title: str) -> list[Document]:
+    return [
+        Document(
+            page_content=text,
+            metadata={
+                "source": url,
+                "url": url,
+                "title": title,
+                "suffix": ".html",
+                "filename": url,
+            },
+        )
+    ]
+
+
+def _extract_page_text(html: str) -> tuple[str, str]:
+    soup = BeautifulSoup(html, "html.parser")
+    for tag in soup(["script", "style", "noscript"]):
+        tag.decompose()
+    title = (soup.title.string or "").strip() if soup.title else ""
+    text = soup.get_text("\n", strip=True)
+    return text, title
+
+
+def _crawl_same_domain(start_url: str, max_pages: int, timeout_seconds: int) -> list[dict[str, str]]:
+    parsed_start = urlparse(start_url)
+    base_domain = parsed_start.netloc
+    if not parsed_start.scheme:
+        start_url = f"https://{start_url}"
+
+    queue: deque[str] = deque([start_url])
+    visited: set[str] = set()
+    pages: list[dict[str, str]] = []
+
+    headers = {
+        "User-Agent": "IEEE-AI-Chatbot-RAG/1.0 (+https://ieee-mangment.vercel.app/)"
+    }
+
+    while queue and len(pages) < max_pages:
+        url = queue.popleft()
+        if url in visited:
+            continue
+        visited.add(url)
+
+        try:
+            response = requests.get(url, timeout=timeout_seconds, headers=headers)
+            if response.status_code >= 400:
+                continue
+            if "text/html" not in response.headers.get("Content-Type", ""):
+                continue
+        except requests.RequestException:
+            continue
+
+        text, title = _extract_page_text(response.text)
+        if text:
+            pages.append({"url": url, "text": text, "title": title})
+
+        soup = BeautifulSoup(response.text, "html.parser")
+        for a_tag in soup.find_all("a", href=True):
+            absolute = urljoin(url, a_tag["href"]).split("#", 1)[0]
+            parsed = urlparse(absolute)
+            if parsed.scheme not in {"http", "https"}:
+                continue
+            if parsed.netloc != base_domain:
+                continue
+            if absolute not in visited:
+                queue.append(absolute)
+
+    return pages
 
 
 def ingest_files(settings: Settings, file_paths: list[str], origin: str) -> dict[str, int]:
@@ -172,3 +247,65 @@ def sync_local_docs(settings: Settings) -> dict[str, int]:
     result["deleted"] += delete_count
     result["total_files"] = len(all_files)
     return result
+
+
+def ingest_website(settings: Settings, start_url: str, max_pages: int = 25) -> dict[str, int]:
+    pages = _crawl_same_domain(
+        start_url=start_url,
+        max_pages=max_pages,
+        timeout_seconds=settings.website_timeout_seconds,
+    )
+
+    vector_store = get_vector_store(settings)
+    splitter = RecursiveCharacterTextSplitter(
+        chunk_size=settings.chunk_size,
+        chunk_overlap=settings.chunk_overlap,
+    )
+    manifest_path = Path(settings.manifest_path)
+    manifest = _load_manifest(manifest_path)
+    sources = manifest.setdefault("sources", {})
+
+    indexed = 0
+    skipped = 0
+    deleted = 0
+
+    for page in pages:
+        url = page["url"]
+        text = page["text"]
+        title = page["title"]
+        content_hash = hashlib.sha256(text.encode("utf-8")).hexdigest()
+
+        existing = sources.get(url)
+        if existing and existing.get("hash") == content_hash:
+            skipped += 1
+            continue
+
+        docs = _website_chunks_to_documents(url=url, text=text, title=title)
+        chunks = splitter.split_documents(docs)
+        chunk_ids: list[str] = []
+        for idx, chunk in enumerate(chunks):
+            chunk_id = hashlib.sha1(f"{url}:{content_hash}:{idx}".encode("utf-8")).hexdigest()
+            chunk.metadata["chunk_id"] = chunk_id
+            chunk.metadata["origin"] = "website"
+            chunk.metadata["hash"] = content_hash
+            chunk_ids.append(chunk_id)
+
+        if existing and existing.get("chunk_ids"):
+            vector_store.delete(ids=existing["chunk_ids"])
+            deleted += len(existing["chunk_ids"])
+
+        vector_store.add_documents(documents=chunks, ids=chunk_ids)
+        sources[url] = {
+            "hash": content_hash,
+            "chunk_ids": chunk_ids,
+            "origin": "website",
+        }
+        indexed += 1
+
+    _save_manifest(manifest_path, manifest)
+    return {
+        "indexed": indexed,
+        "skipped": skipped,
+        "deleted": deleted,
+        "total_pages": len(pages),
+    }

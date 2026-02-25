@@ -77,6 +77,7 @@ python app.py
 	- indexes new/updated files,
 	- skips unchanged files,
 	- deletes vectors for removed local files.
+- **Crawl Website + Index** button: crawls same-domain pages from a start URL (default: `https://ieee-mangment.vercel.app/`) and indexes page content incrementally.
 
 The incremental state is tracked in `.rag_manifest.json`.
 

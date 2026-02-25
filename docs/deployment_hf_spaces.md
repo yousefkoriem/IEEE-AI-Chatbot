@@ -25,6 +25,9 @@ In Space Settings → Variables and secrets:
 - `PINECONE_REGION`
 - `CHAT_MODEL` (default: `gemini-2.5-flash-lite`)
 - `EMBEDDING_MODEL` (default: `models/gemini-embedding-001`)
+- `WEBSITE_DEFAULT_URL` (default: `https://ieee-mangment.vercel.app/`)
+- `WEBSITE_MAX_PAGES` (default: `25`)
+- `WEBSITE_TIMEOUT_SECONDS` (default: `20`)
 
 Optional LangSmith:
 

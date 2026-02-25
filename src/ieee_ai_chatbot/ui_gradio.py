@@ -7,7 +7,7 @@ import gradio as gr
 
 from .chat import RAGAgent
 from .config import Settings
-from .ingest import ingest_files, sync_local_docs
+from .ingest import ingest_files, ingest_website, sync_local_docs
 
 
 def _history_to_text(history: list[dict[str, str]] | list[list[str]] | None) -> str:
@@ -63,6 +63,17 @@ def create_demo() -> gr.Blocks:
         lines = [f"- {key}: {value}" for key, value in status.items()]
         return "\n".join(lines)
 
+    def website_fn(url: str, max_pages: int) -> str:
+        target_url = (url or settings.website_default_url).strip()
+        if not target_url:
+            return "Website URL is required."
+        pages_limit = max(1, int(max_pages or settings.website_max_pages))
+        result = ingest_website(settings, start_url=target_url, max_pages=pages_limit)
+        return (
+            f"Crawled pages: {result['total_pages']} | Indexed: {result['indexed']} | "
+            f"Skipped: {result['skipped']} | Deleted old chunks: {result['deleted']}"
+        )
+
     with gr.Blocks(title="IEEE AI RAG Chatbot") as demo:
         gr.Markdown("# IEEE AI RAG Chatbot")
 
@@ -80,10 +91,26 @@ def create_demo() -> gr.Blocks:
             )
             upload_output = gr.Textbox(label="Upload Status")
             sync_output = gr.Textbox(label="Local Sync Status")
+            website_url = gr.Textbox(
+                label="Website URL",
+                value=settings.website_default_url,
+            )
+            website_max_pages = gr.Number(
+                label="Website max pages",
+                value=settings.website_max_pages,
+                precision=0,
+            )
+            website_output = gr.Textbox(label="Website Crawl Status")
             upload_button = gr.Button("Upload + Index")
             sync_button = gr.Button("Sync docs/pdf and docs/ppt")
+            website_button = gr.Button("Crawl Website + Index")
             upload_button.click(fn=upload_fn, inputs=[uploader], outputs=[upload_output])
             sync_button.click(fn=sync_fn, inputs=None, outputs=[sync_output])
+            website_button.click(
+                fn=website_fn,
+                inputs=[website_url, website_max_pages],
+                outputs=[website_output],
+            )
 
         with gr.Tab("Status"):
             status_output = gr.Markdown()

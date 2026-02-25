@@ -24,6 +24,9 @@ class Settings:
     chunk_overlap: int
     docs_pdf_dir: str
     docs_ppt_dir: str
+    website_default_url: str
+    website_max_pages: int
+    website_timeout_seconds: int
     manifest_path: str
     langsmith_api_key: str
     langsmith_project: str
@@ -49,6 +52,9 @@ class Settings:
             chunk_overlap=int(os.getenv("CHUNK_OVERLAP", "150")),
             docs_pdf_dir=os.getenv("DOCS_PDF_DIR", "docs/pdf"),
             docs_ppt_dir=os.getenv("DOCS_PPT_DIR", "docs/ppt"),
+            website_default_url=os.getenv("WEBSITE_DEFAULT_URL", "https://ieee-mangment.vercel.app/"),
+            website_max_pages=int(os.getenv("WEBSITE_MAX_PAGES", "25")),
+            website_timeout_seconds=int(os.getenv("WEBSITE_TIMEOUT_SECONDS", "20")),
             manifest_path=os.getenv("MANIFEST_PATH", ".rag_manifest.json"),
             langsmith_api_key=os.getenv("LANGSMITH_API_KEY", ""),
             langsmith_project=os.getenv("LANGSMITH_PROJECT", "IEEE-AI-Chatbot"),
