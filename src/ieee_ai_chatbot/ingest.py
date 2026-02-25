@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import hashlib
+import importlib
 import json
 from pathlib import Path
 from collections import deque
@@ -17,7 +18,7 @@ from bs4 import BeautifulSoup
 from .config import Settings
 from .vectorstore import get_vector_store
 
-SUPPORTED_EXTENSIONS = {".pdf", ".ppt", ".pptx"}
+SUPPORTED_EXTENSIONS = {".pdf", ".ppt", ".pptx", ".docx", ".doc"}
 
 
 def _sha256_file(path: Path) -> str:
@@ -57,12 +58,40 @@ def _extract_ppt_text(path: Path) -> str:
     return "\n".join(blocks).strip()
 
 
+def _extract_docx_text(path: Path) -> str:
+    docx_module = importlib.import_module("docx")
+    document = docx_module.Document(str(path))
+    blocks: list[str] = []
+    for paragraph in document.paragraphs:
+        text = paragraph.text.strip()
+        if text:
+            blocks.append(text)
+    return "\n".join(blocks).strip()
+
+
+def _extract_doc_text(path: Path) -> str:
+    try:
+        from unstructured.partition.auto import partition
+    except Exception as error:
+        raise RuntimeError(
+            "DOC parsing requires unstructured document support."
+        ) from error
+
+    elements = partition(filename=str(path))
+    blocks = [str(element).strip() for element in elements if str(element).strip()]
+    return "\n".join(blocks).strip()
+
+
 def _extract_text(path: Path) -> str:
     suffix = path.suffix.lower()
     if suffix == ".pdf":
         return _extract_pdf_text(path)
     if suffix in {".ppt", ".pptx"}:
         return _extract_ppt_text(path)
+    if suffix == ".docx":
+        return _extract_docx_text(path)
+    if suffix == ".doc":
+        return _extract_doc_text(path)
     raise ValueError(f"Unsupported file extension: {path.suffix}")
 
 
@@ -209,7 +238,11 @@ def ingest_files(settings: Settings, file_paths: list[str], origin: str) -> dict
 
 
 def sync_local_docs(settings: Settings) -> dict[str, int]:
-    search_roots = [Path(settings.docs_pdf_dir), Path(settings.docs_ppt_dir)]
+    search_roots = [
+        Path(settings.docs_pdf_dir),
+        Path(settings.docs_ppt_dir),
+        Path(settings.docs_doc_dir),
+    ]
     all_files: list[str] = []
     for root in search_roots:
         if not root.exists():

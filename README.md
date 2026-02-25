@@ -72,14 +72,16 @@ python app.py
 
 ## How ingestion works
 
-- **Upload + Index** tab: upload PDF/PPT/PPTX files directly in Gradio and index immediately.
-- **Local Sync** button: scans `docs/pdf` and `docs/ppt`, then:
+- **Upload + Index** tab: upload PDF/PPT/PPTX/DOCX/DOC files directly in Gradio and index immediately.
+- **Local Sync** button: scans `docs/pdf`, `docs/ppt`, and `docs/doc`, then:
 	- indexes new/updated files,
 	- skips unchanged files,
 	- deletes vectors for removed local files.
 - **Crawl Website + Index** button: crawls same-domain pages from a start URL (default: `https://ieee-mangment.vercel.app/`) and indexes page content incrementally.
 
 The incremental state is tracked in `.rag_manifest.json`.
+
+By default, chat answers do not include sources unless you explicitly ask for sources/citations in your prompt.
 
 ## LangSmith
 

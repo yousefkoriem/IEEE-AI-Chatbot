@@ -10,17 +10,26 @@ from .config import Settings
 
 
 class ResilientGoogleEmbeddings:
-    def __init__(self, primary_model: str, api_key: str, fallback_model: str) -> None:
+    def __init__(
+        self,
+        primary_model: str,
+        api_key: str,
+        fallback_model: str,
+        output_dimensionality: int,
+    ) -> None:
         self.primary_model = primary_model
         self.fallback_model = fallback_model
         self.api_key = api_key
+        self.output_dimensionality = output_dimensionality
         self._primary = GoogleGenerativeAIEmbeddings(
             model=self.primary_model,
             google_api_key=self.api_key,
+            output_dimensionality=self.output_dimensionality,
         )
         self._fallback = GoogleGenerativeAIEmbeddings(
             model=self.fallback_model,
             google_api_key=self.api_key,
+            output_dimensionality=self.output_dimensionality,
         )
 
     @staticmethod
@@ -55,6 +64,20 @@ def ensure_index(settings: Settings) -> None:
             item["name"] for item in pc.list_indexes().to_dict().get("indexes", [])
         }
     if settings.pinecone_index_name in existing_indexes:
+        description = pc.describe_index(settings.pinecone_index_name)
+        index_dimension = None
+        if hasattr(description, "dimension"):
+            index_dimension = getattr(description, "dimension")
+        elif isinstance(description, dict):
+            index_dimension = description.get("dimension")
+
+        if index_dimension is not None and int(index_dimension) != settings.pinecone_dimension:
+            raise ValueError(
+                "Pinecone index dimension mismatch: "
+                f"index '{settings.pinecone_index_name}' is {index_dimension}, "
+                f"but PINECONE_DIMENSION is {settings.pinecone_dimension}. "
+                "Use a matching index or update PINECONE_DIMENSION / PINECONE_INDEX_NAME."
+            )
         return
 
     pc.create_index(
@@ -71,6 +94,7 @@ def get_vector_store(settings: Settings) -> PineconeVectorStore:
         primary_model=settings.embedding_model,
         api_key=settings.google_api_key,
         fallback_model="models/gemini-embedding-001",
+        output_dimensionality=settings.pinecone_dimension,
     )
     return PineconeVectorStore(
         index_name=settings.pinecone_index_name,

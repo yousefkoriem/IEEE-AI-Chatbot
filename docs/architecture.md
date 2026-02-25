@@ -4,7 +4,7 @@
 
 - `config.py`: environment-driven settings, required key validation, LangSmith runtime toggles.
 - `vectorstore.py`: Pinecone index creation/check and LangChain Pinecone vector store binding.
-- `ingest.py`: document extraction (PDF/PPT/PPTX + website crawl), chunking, deterministic IDs, upsert/delete, manifest tracking.
+- `ingest.py`: document extraction (PDF/PPT/PPTX/DOCX/DOC + website crawl), chunking, deterministic IDs, upsert/delete, manifest tracking.
 - `retrieval.py`: MMR retrieval strategy.
 - `chat.py`: RAG orchestration with Google `gemini-2.5-flash-lite`.
 - `ui_gradio.py`: user interface for chat, upload indexing, local sync, and status.
