@@ -1,5 +1,4 @@
-def main():
-    print("Hello from ieee-ai-chatbot!")
+from app import main
 
 
 if __name__ == "__main__":

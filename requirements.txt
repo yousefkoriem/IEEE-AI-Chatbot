@@ -1,0 +1,11 @@
+gradio>=5.33.0
+langchain>=1.2.10
+langchain-community>=0.4.1
+langchain-google-genai>=4.2.1
+langchain-pinecone>=0.2.13
+langchain-text-splitters>=1.0.0
+pinecone-client>=6.0.0
+python-dotenv>=1.1.1
+pypdf>=6.7.3
+python-pptx>=1.0.2
+unstructured>=0.21.5
