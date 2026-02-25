@@ -1,0 +1,16 @@
+[project]
+name = "ieee-ai-chatbot"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "langchain>=1.2.10",
+    "langchain-community>=0.4.1",
+    "langchain-google-genai>=4.2.1",
+    "langchain-pinecone>=0.2.13",
+    "pinecone-client>=6.0.0",
+    "pypdf>=6.7.3",
+    "python-pptx>=1.0.2",
+    "unstructured>=0.21.5",
+]
