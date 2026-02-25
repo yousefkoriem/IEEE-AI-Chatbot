@@ -83,6 +83,10 @@ The incremental state is tracked in `.rag_manifest.json`.
 
 By default, chat answers do not include sources unless you explicitly ask for sources/citations in your prompt.
 
+If Pinecone has no relevant context for a question, the chatbot can fall back to quick web search snippets (configurable via env vars).
+
+For faster responses, defaults are tuned to smaller retrieval depth (`RETRIEVER_K=3`, `RETRIEVER_FETCH_K=10`) and capped generation length (`MAX_OUTPUT_TOKENS=400`).
+
 ## LangSmith
 
 Set:

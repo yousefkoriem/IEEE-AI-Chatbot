@@ -17,9 +17,13 @@ class Settings:
     pinecone_metric: str
     pinecone_dimension: int
     chat_model: str
+    max_output_tokens: int
     embedding_model: str
     retriever_k: int
     retriever_fetch_k: int
+    internet_fallback_enabled: bool
+    web_search_results: int
+    web_search_timeout_seconds: int
     chunk_size: int
     chunk_overlap: int
     docs_pdf_dir: str
@@ -46,9 +50,13 @@ class Settings:
             pinecone_metric=os.getenv("PINECONE_METRIC", "cosine"),
             pinecone_dimension=int(os.getenv("PINECONE_DIMENSION", "1024")),
             chat_model=os.getenv("CHAT_MODEL", "gemini-2.5-flash-lite"),
+            max_output_tokens=int(os.getenv("MAX_OUTPUT_TOKENS", "400")),
             embedding_model=os.getenv("EMBEDDING_MODEL", "models/gemini-embedding-001"),
-            retriever_k=int(os.getenv("RETRIEVER_K", "5")),
-            retriever_fetch_k=int(os.getenv("RETRIEVER_FETCH_K", "20")),
+            retriever_k=int(os.getenv("RETRIEVER_K", "3")),
+            retriever_fetch_k=int(os.getenv("RETRIEVER_FETCH_K", "10")),
+            internet_fallback_enabled=os.getenv("INTERNET_FALLBACK_ENABLED", "true").lower() == "true",
+            web_search_results=int(os.getenv("WEB_SEARCH_RESULTS", "3")),
+            web_search_timeout_seconds=int(os.getenv("WEB_SEARCH_TIMEOUT_SECONDS", "8")),
             chunk_size=int(os.getenv("CHUNK_SIZE", "1200")),
             chunk_overlap=int(os.getenv("CHUNK_OVERLAP", "150")),
             docs_pdf_dir=os.getenv("DOCS_PDF_DIR", "docs/pdf"),
