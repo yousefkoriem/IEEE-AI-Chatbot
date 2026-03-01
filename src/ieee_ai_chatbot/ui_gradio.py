@@ -43,6 +43,30 @@ def _history_to_text(history: list[dict[str, str]] | list[list[str]] | None) -> 
     return "\n".join(lines)
 
 
+def _normalize_history(history: Any) -> list[dict[str, str]]:
+    if not isinstance(history, list):
+        return []
+
+    normalized: list[dict[str, str]] = []
+    for item in history:
+        if isinstance(item, dict):
+            role = str(item.get("role", "")).strip()
+            content = str(item.get("content", "")).strip()
+            if role in {"user", "assistant"} and content:
+                normalized.append({"role": role, "content": content})
+            continue
+
+        if isinstance(item, list | tuple) and len(item) == 2:
+            user_text = str(item[0]).strip()
+            assistant_text = str(item[1]).strip()
+            if user_text:
+                normalized.append({"role": "user", "content": user_text})
+            if assistant_text:
+                normalized.append({"role": "assistant", "content": assistant_text})
+
+    return normalized
+
+
 def create_demo() -> gr.Blocks:
     settings = Settings.from_env()
     agent = RAGAgent(settings)
@@ -60,6 +84,16 @@ def create_demo() -> gr.Blocks:
 
     def chat_api_fn(message: str) -> str:
         return chat_fn(message, history=None)
+
+    def chat_turn_api_fn(message: str, history: Any) -> tuple[str, list[dict[str, str]]]:
+        history_items = _normalize_history(history)
+        answer = chat_fn(message, history=history_items)
+        updated_history = [
+            *history_items,
+            {"role": "user", "content": message},
+            {"role": "assistant", "content": answer},
+        ]
+        return answer, updated_history
 
     def upload_fn(files: list[Any] | None) -> str:
         if not files:
@@ -155,6 +189,21 @@ def create_demo() -> gr.Blocks:
             outputs=[api_output],
             api_name="chat_once",
             show_api=True,
+            queue=False,
+        )
+
+        api_turn_message = gr.Textbox(visible=False)
+        api_turn_history = gr.JSON(visible=False)
+        api_turn_reply = gr.Textbox(visible=False)
+        api_turn_history_out = gr.JSON(visible=False)
+        api_turn_trigger = gr.Button(visible=False)
+        api_turn_trigger.click(
+            fn=chat_turn_api_fn,
+            inputs=[api_turn_message, api_turn_history],
+            outputs=[api_turn_reply, api_turn_history_out],
+            api_name="chat_turn",
+            show_api=True,
+            queue=False,
         )
 
     return demo
