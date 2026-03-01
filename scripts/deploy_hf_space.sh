@@ -33,6 +33,31 @@ else
   git remote add hf "$HF_REMOTE_URL"
 fi
 
-git push hf "${BRANCH}:main"
+if GIT_TERMINAL_PROMPT=0 git push hf "${BRANCH}:main"; then
+  echo "Deployment push finished via git: ${HF_REMOTE_URL}"
+  exit 0
+fi
 
-echo "Deployment push finished: ${HF_REMOTE_URL}"
+echo "Git push failed; falling back to 'hf upload' (single-commit deploy)."
+
+HF_TOKEN="${HF_TOKEN:-}"
+if [[ -z "$HF_TOKEN" && -f "$HOME/.cache/huggingface/token" ]]; then
+  HF_TOKEN="$(cat "$HOME/.cache/huggingface/token")"
+fi
+
+TOKEN_ARG=()
+if [[ -n "$HF_TOKEN" ]]; then
+  TOKEN_ARG=(--token "$HF_TOKEN")
+fi
+
+hf upload "$SPACE_ID" . . \
+  --repo-type space \
+  --commit-message "Deploy from $(basename "$(pwd)")" \
+  --exclude ".git/*" \
+  --exclude ".venv/*" \
+  --exclude "__pycache__/*" \
+  --exclude "**/__pycache__/*" \
+  --exclude ".env" \
+  "${TOKEN_ARG[@]}"
+
+echo "Deployment finished via hf upload: ${HF_REMOTE_URL}"

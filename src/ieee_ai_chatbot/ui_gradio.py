@@ -58,6 +58,9 @@ def create_demo() -> gr.Blocks:
         source_text = "\n".join(f"- {source}" for source in sources[:8])
         return f"{answer}\n\nSources:\n{source_text}"
 
+    def chat_api_fn(message: str) -> str:
+        return chat_fn(message, history=None)
+
     def upload_fn(files: list[Any] | None) -> str:
         if not files:
             return "No files selected."
@@ -142,5 +145,16 @@ def create_demo() -> gr.Blocks:
             status_output = gr.Markdown()
             status_button = gr.Button("Refresh status")
             status_button.click(fn=status_fn, inputs=None, outputs=[status_output])
+
+        api_message = gr.Textbox(visible=False)
+        api_output = gr.Textbox(visible=False)
+        api_trigger = gr.Button(visible=False)
+        api_trigger.click(
+            fn=chat_api_fn,
+            inputs=[api_message],
+            outputs=[api_output],
+            api_name="chat_once",
+            show_api=True,
+        )
 
     return demo
