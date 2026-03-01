@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from langchain.agents import create_agent
 from langchain_google_genai import ChatGoogleGenerativeAI
 
 from .config import Settings, configure_langsmith, langsmith_status
@@ -24,6 +25,14 @@ class RAGAgent:
             temperature=0.2,
             max_output_tokens=settings.max_output_tokens,
         )
+        self._agent = create_agent(
+            model=self._llm,
+            tools=[],
+            system_prompt=(
+                "You are an assistant for IEEE Beni Suef Student Branch. "
+                "Prefer factual, direct answers and avoid unnecessary disclaimers."
+            ),
+        )
 
     def answer(self, question: str, history_text: str = "") -> tuple[str, list[str]]:
         docs = self._retrieve_docs(question)
@@ -31,17 +40,36 @@ class RAGAgent:
         sources = [str(doc.metadata.get("filename", "unknown")) for doc in docs]
         context = "\n\n".join(context_chunks)
 
+        if context.strip():
+            context_instruction = (
+                "Use retrieved context first when it is relevant and sufficient. "
+                "If the question also needs general knowledge, combine both clearly and concisely."
+            )
+        else:
+            context_instruction = (
+                "No retrieved context is available for this question. "
+                "Answer using your general knowledge in a concise and practical way. "
+                "Do not claim that you cannot answer only because retrieval context is empty."
+            )
+
         prompt = (
-            "You are an assistant for IEEE Beni Suef Student Branch. "
-            "Use the retrieved context to answer user questions. "
-            "If Pinecone context is unavailable, web fallback context may be used. "
-            "If context is still insufficient, say that clearly.\n\n"
+            f"{context_instruction}\n\n"
             f"Conversation history:\n{history_text or 'N/A'}\n\n"
             f"Question:\n{question}\n\n"
             f"Retrieved context:\n{context[:8000]}\n"
         )
-        response = self._llm.invoke(prompt)
-        return str(response.content), list(dict.fromkeys(sources))
+        response = self._agent.invoke(
+            {
+                "messages": [
+                    {
+                        "role": "user",
+                        "content": prompt,
+                    }
+                ]
+            }
+        )
+        answer_text = str(response["messages"][-1].content)
+        return answer_text, list(dict.fromkeys(sources))
 
     def _retrieve_docs(self, question: str):
         docs = []

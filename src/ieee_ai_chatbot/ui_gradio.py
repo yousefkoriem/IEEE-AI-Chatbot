@@ -47,7 +47,10 @@ def create_demo() -> gr.Blocks:
     settings = Settings.from_env()
     agent = RAGAgent(settings)
 
-    def chat_fn(message: str, history: list[dict[str, str]] | list[list[str]] | None) -> str:
+    def chat_fn(
+        message: str,
+        history: list[dict[str, str]] | list[list[str]] | None = None,
+    ) -> str:
         history_text = _history_to_text(history)
         answer, sources = agent.answer(message, history_text=history_text)
         if not sources or not _user_requested_sources(message):
