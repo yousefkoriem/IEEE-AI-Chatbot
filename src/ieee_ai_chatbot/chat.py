@@ -4,6 +4,7 @@ from langchain.agents import create_agent
 from langchain_google_genai import ChatGoogleGenerativeAI
 
 from .config import Settings, configure_langsmith, langsmith_status
+from .prompts import build_prompt_config, build_system_prompt, build_user_prompt
 from .retrieval import search_web_snippets
 from .vectorstore import get_vector_store
 
@@ -11,6 +12,7 @@ from .vectorstore import get_vector_store
 class RAGAgent:
     def __init__(self, settings: Settings) -> None:
         self.settings = settings
+        self._prompt_config = build_prompt_config(settings)
         configure_langsmith(settings)
         self._retriever = get_vector_store(settings).as_retriever(
             search_type="mmr",
@@ -28,10 +30,7 @@ class RAGAgent:
         self._agent = create_agent(
             model=self._llm,
             tools=[],
-            system_prompt=(
-                "You are an assistant for IEEE Beni Suef Student Branch. "
-                "Prefer factual, direct answers and avoid unnecessary disclaimers."
-            ),
+            system_prompt=build_system_prompt(settings),
         )
 
     def answer(self, question: str, history_text: str = "") -> tuple[str, list[str]]:
@@ -39,24 +38,11 @@ class RAGAgent:
         context_chunks = [doc.page_content for doc in docs]
         sources = [str(doc.metadata.get("filename", "unknown")) for doc in docs]
         context = "\n\n".join(context_chunks)
-
-        if context.strip():
-            context_instruction = (
-                "Use retrieved context first when it is relevant and sufficient. "
-                "If the question also needs general knowledge, combine both clearly and concisely."
-            )
-        else:
-            context_instruction = (
-                "No retrieved context is available for this question. "
-                "Answer using your general knowledge in a concise and practical way. "
-                "Do not claim that you cannot answer only because retrieval context is empty."
-            )
-
-        prompt = (
-            f"{context_instruction}\n\n"
-            f"Conversation history:\n{history_text or 'N/A'}\n\n"
-            f"Question:\n{question}\n\n"
-            f"Retrieved context:\n{context[:8000]}\n"
+        prompt = build_user_prompt(
+            question=question,
+            history_text=history_text,
+            context=context,
+            prompt_config=self._prompt_config,
         )
         response = self._agent.invoke(
             {

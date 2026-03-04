@@ -335,6 +335,29 @@ def ingest_website(settings: Settings, start_url: str, max_pages: int = 25) -> d
         }
         indexed += 1
 
+    parsed_start = urlparse(start_url if "://" in start_url else f"https://{start_url}")
+    crawled_urls = {page["url"] for page in pages}
+    stale_sources: list[str] = []
+
+    for source_id, meta in list(sources.items()):
+        if meta.get("origin") != "website":
+            continue
+
+        parsed_source = urlparse(source_id)
+        if parsed_source.netloc != parsed_start.netloc:
+            continue
+        if source_id in crawled_urls:
+            continue
+
+        chunk_ids = meta.get("chunk_ids", [])
+        if chunk_ids:
+            vector_store.delete(ids=chunk_ids)
+            deleted += len(chunk_ids)
+        stale_sources.append(source_id)
+
+    for source_id in stale_sources:
+        sources.pop(source_id, None)
+
     _save_manifest(manifest_path, manifest)
     return {
         "indexed": indexed,

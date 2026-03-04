@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from pathlib import Path
 from typing import Any
 
@@ -70,6 +71,32 @@ def _normalize_history(history: Any) -> list[dict[str, str]]:
 def create_demo() -> gr.Blocks:
     settings = Settings.from_env()
     agent = RAGAgent(settings)
+    session_histories: dict[str, list[dict[str, str]]] = {}
+
+    def _session_key(request: gr.Request | None) -> str:
+        if request is None:
+            return "default"
+
+        session_hash = getattr(request, "session_hash", None)
+        if isinstance(session_hash, str) and session_hash.strip():
+            return f"session:{session_hash.strip()}"
+
+        header_session_id = (
+            request.headers.get("x-session-id")
+            or request.headers.get("x-client-id")
+            or ""
+        ).strip()
+        if header_session_id:
+            return f"header:{header_session_id}"
+
+        forwarded_for = (request.headers.get("x-forwarded-for") or "").split(",")[0].strip()
+        if forwarded_for:
+            return f"ip:{forwarded_for}"
+
+        if request.client and request.client.host:
+            return f"ip:{request.client.host}"
+
+        return "default"
 
     def chat_fn(
         message: str,
@@ -82,18 +109,36 @@ def create_demo() -> gr.Blocks:
         source_text = "\n".join(f"- {source}" for source in sources[:8])
         return f"{answer}\n\nSources:\n{source_text}"
 
-    def chat_api_fn(message: str) -> str:
-        return chat_fn(message, history=None)
+    def chat_api_fn(message: str, request: gr.Request | None = None) -> str:
+        if not (message or "").strip():
+            return ""
 
-    def chat_turn_api_fn(message: str, history: Any) -> tuple[str, list[dict[str, str]]]:
-        history_items = _normalize_history(history)
+        key = _session_key(request)
+        history_items = session_histories.get(key, [])
         answer = chat_fn(message, history=history_items)
         updated_history = [
             *history_items,
             {"role": "user", "content": message},
             {"role": "assistant", "content": answer},
         ]
-        return answer, updated_history
+        session_histories[key] = updated_history[-30:]
+        return answer
+
+    def chat_turn_api_fn(message: str, history_json: str) -> tuple[str, str]:
+        parsed_history: Any
+        try:
+            parsed_history = json.loads(history_json or "[]")
+        except Exception:
+            parsed_history = []
+
+        history_items = _normalize_history(parsed_history)
+        answer = chat_fn(message, history=history_items)
+        updated_history = [
+            *history_items,
+            {"role": "user", "content": message},
+            {"role": "assistant", "content": answer},
+        ]
+        return answer, json.dumps(updated_history, ensure_ascii=False)
 
     def upload_fn(files: list[Any] | None) -> str:
         if not files:
@@ -193,9 +238,9 @@ def create_demo() -> gr.Blocks:
         )
 
         api_turn_message = gr.Textbox(visible=False)
-        api_turn_history = gr.JSON(visible=False)
+        api_turn_history = gr.Textbox(visible=False)
         api_turn_reply = gr.Textbox(visible=False)
-        api_turn_history_out = gr.JSON(visible=False)
+        api_turn_history_out = gr.Textbox(visible=False)
         api_turn_trigger = gr.Button(visible=False)
         api_turn_trigger.click(
             fn=chat_turn_api_fn,

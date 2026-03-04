@@ -30,6 +30,7 @@ src/ieee_ai_chatbot/
 	vectorstore.py
 	ingest.py
 	retrieval.py
+	prompts.py
 	chat.py
 	ui_gradio.py
 docs/
