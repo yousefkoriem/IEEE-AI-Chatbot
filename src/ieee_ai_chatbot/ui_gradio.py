@@ -241,30 +241,279 @@ def create_demo() -> gr.Blocks:
         except Exception as error:
             return f"Text ingestion failed: {error}"
 
+    css = """
+    @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap');
+
+    :root, .gradio-container {
+        font-family: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif !important;
+    }
+
+    .welcome-title {
+        font-size: 2.5rem !important;
+        font-weight: 800 !important;
+        background: linear-gradient(135deg, #00629B 0%, #F58220 50%, #8E2DE2 100%);
+        -webkit-background-clip: text !important;
+        -webkit-text-fill-color: transparent !important;
+        text-align: center !important;
+        margin-top: 1.5rem !important;
+        margin-bottom: 0.5rem !important;
+        letter-spacing: -0.5px !important;
+    }
+
+    .welcome-subtitle {
+        font-size: 1.15rem !important;
+        color: var(--body-text-color-subdued, #555) !important;
+        text-align: center !important;
+        margin-bottom: 2rem !important;
+    }
+
+    .suggestion-card {
+        background: var(--block-background-fill, #f8f9fa) !important;
+        border: 1px solid var(--border-color-primary, #e5e7eb) !important;
+        border-radius: 16px !important;
+        padding: 18px 14px !important;
+        text-align: center !important;
+        cursor: pointer !important;
+        transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        font-size: 0.95rem !important;
+        font-weight: 600 !important;
+        color: var(--body-text-color, #1f2937) !important;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03) !important;
+        min-height: 80px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+    }
+
+    .suggestion-card:hover {
+        border-color: #F58220 !important;
+        background: var(--block-background-fill-hover, #ffffff) !important;
+        transform: translateY(-4px) !important;
+        box-shadow: 0 10px 15px -3px rgba(245, 130, 32, 0.15), 0 4px 6px -2px rgba(245, 130, 32, 0.1) !important;
+    }
+
+    .chatbot-container {
+        border-radius: 20px !important;
+        border: 1px solid var(--border-color-primary, #e5e7eb) !important;
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.05) !important;
+        overflow: hidden !important;
+    }
+
+    .input-row {
+        background: var(--background-fill-secondary, #f3f4f6) !important;
+        border-radius: 30px !important;
+        padding: 6px 16px !important;
+        border: 1px solid var(--border-color-primary, #e5e7eb) !important;
+        display: flex !important;
+        align-items: center !important;
+        box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.02) !important;
+        margin-top: 10px !important;
+    }
+
+    .input-row:focus-within {
+        border-color: #00629B !important;
+        background: var(--background-fill-primary, #ffffff) !important;
+        box-shadow: 0 0 0 3px rgba(0, 98, 155, 0.15) !important;
+    }
+
+    .input-textbox {
+        border: none !important;
+        background: transparent !important;
+        box-shadow: none !important;
+        flex-grow: 1 !important;
+    }
+
+    .input-textbox textarea {
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+    }
+
+    .send-btn {
+        background: linear-gradient(135deg, #00629B 0%, #004b77 100%) !important;
+        color: white !important;
+        border-radius: 50% !important;
+        border: none !important;
+        min-width: 42px !important;
+        max-width: 42px !important;
+        height: 42px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        box-shadow: 0 4px 6px -1px rgba(0, 98, 155, 0.3) !important;
+        transition: all 0.2s ease !important;
+        padding: 0 !important;
+        font-size: 1.15rem !important;
+    }
+
+    .send-btn:hover {
+        background: linear-gradient(135deg, #F58220 0%, #d86d12 100%) !important;
+        box-shadow: 0 4px 10px rgba(245, 130, 32, 0.4) !important;
+        transform: scale(1.05) !important;
+    }
+
+    .feedback-row {
+        justify-content: center !important;
+        gap: 12px !important;
+        margin-top: 8px !important;
+    }
+
+    .feedback-btn {
+        border-radius: 20px !important;
+        font-size: 0.9rem !important;
+        font-weight: 600 !important;
+        padding: 6px 16px !important;
+        background: var(--block-background-fill, #f3f4f6) !important;
+        border: 1px solid var(--border-color-primary, #e5e7eb) !important;
+        color: var(--body-text-color, #374151) !important;
+        transition: all 0.2s ease !important;
+    }
+
+    .feedback-btn:hover {
+        background: var(--background-fill-primary, #ffffff) !important;
+        border-color: #00629B !important;
+        color: #00629B !important;
+    }
+
+    .clear-btn {
+        border-radius: 20px !important;
+        font-size: 0.9rem !important;
+        font-weight: 600 !important;
+        padding: 6px 16px !important;
+        background: #fee2e2 !important;
+        border: 1px solid #fca5a5 !important;
+        color: #991b1b !important;
+        transition: all 0.2s ease !important;
+    }
+
+    .clear-btn:hover {
+        background: #fecaca !important;
+        color: #7f1d1d !important;
+    }
+    """
+
     with gr.Blocks(
         title="IEEE AI RAG Chatbot",
+        css=css,
     ) as demo:
-        gr.Markdown(
-            "# 🤖 IEEE AI RAG Chatbot\n"
-            "Ask questions about **IEEE Beni Suef Student Branch** — powered by RAG retrieval and Google Gemini."
-        )
-
-        with gr.Tab("💬 Chat"):
-            chatbot = gr.Chatbot(label="Chat History")
-            msg_box = gr.Textbox(placeholder="Ask a question...", label="Your Message")
-            with gr.Row():
-                submit_btn = gr.Button("Send", variant="primary")
-                clear_btn = gr.Button("Clear History")
-                
-            with gr.Row():
-                upvote_btn = gr.Button("👍 Good Response")
-                downvote_btn = gr.Button("👎 Bad Response")
+        with gr.Sidebar(label="Control Center", open=True):
+            gr.Markdown("## ⚙️ Control Center")
             
+            with gr.Accordion("📥 Data Ingestion", open=False):
+                with gr.Group():
+                    gr.Markdown("### 📄 Upload Files")
+                    uploader = gr.Files(
+                        label="Upload PDF/PPT/DOC/MD/HTML files",
+                        file_count="multiple",
+                        file_types=[".pdf", ".ppt", ".pptx", ".docx", ".doc", ".md", ".html"],
+                    )
+                    upload_button = gr.Button("Upload + Index", variant="primary")
+                    upload_output = gr.Textbox(label="Upload Status", interactive=False)
+                    upload_button.click(fn=upload_fn, inputs=[uploader], outputs=[upload_output])
+
+                with gr.Group():
+                    gr.Markdown("### 📝 Raw Text")
+                    text_input = gr.Textbox(
+                        label="Text Content",
+                        lines=5,
+                        placeholder="Paste text here to index into the knowledge base...",
+                    )
+                    text_source = gr.Textbox(
+                        label="Source Name (Optional)",
+                        placeholder="e.g., meeting_notes_2026.txt",
+                    )
+                    text_button = gr.Button("Ingest Text", variant="secondary")
+                    text_output = gr.Textbox(label="Text Ingestion Status", interactive=False)
+                    text_button.click(
+                        fn=text_ingest_fn,
+                        inputs=[text_input, text_source],
+                        outputs=[text_output],
+                    )
+
+                with gr.Group():
+                    gr.Markdown("### 🌐 Website Crawl")
+                    website_url = gr.Textbox(
+                        label="Website URL",
+                        value=settings.website_default_url,
+                    )
+                    website_max_pages = gr.Number(
+                        label="Max pages to crawl",
+                        value=settings.website_max_pages,
+                        precision=0,
+                    )
+                    website_button = gr.Button("Crawl Website + Index", variant="secondary")
+                    website_output = gr.Textbox(label="Website Crawl Status", interactive=False)
+                    website_button.click(
+                        fn=website_fn,
+                        inputs=[website_url, website_max_pages],
+                        outputs=[website_output],
+                    )
+
+                with gr.Group():
+                    gr.Markdown("### 📂 Local Sync")
+                    sync_button = gr.Button("Sync docs/pdf, docs/ppt, and docs/doc", variant="secondary")
+                    sync_output = gr.Textbox(label="Local Sync Status", interactive=False)
+                    sync_button.click(fn=sync_fn, inputs=None, outputs=[sync_output])
+
+            with gr.Accordion("📊 System Status", open=False):
+                status_output = gr.Markdown("Click refresh to load status.")
+                status_button = gr.Button("Refresh Status", variant="primary")
+                status_button.click(fn=status_fn, inputs=None, outputs=[status_output])
+
+            with gr.Accordion("📚 Knowledge Base Info", open=False):
+                kb_output = gr.Markdown("Click refresh to load KB Stats.")
+                kb_button = gr.Button("Refresh KB Stats", variant="primary")
+                kb_button.click(fn=kb_stats_fn, inputs=None, outputs=[kb_output])
+
+            with gr.Accordion("📈 Analytics Trace", open=False):
+                with gr.Row():
+                    analytics_fb = gr.Markdown("Loading feedback...")
+                    analytics_lat = gr.Markdown("Loading latency...")
+                analytics_runs = gr.Markdown("Loading runs...")
+                analytics_btn = gr.Button("Refresh Analytics", variant="primary")
+                analytics_btn.click(
+                    fn=analytics_fn, 
+                    inputs=None, 
+                    outputs=[analytics_fb, analytics_lat, analytics_runs]
+                )
+
+        # Main Chat Area
+        with gr.Column():
+            welcome_container = gr.Column(visible=True)
+            with welcome_container:
+                gr.Markdown("IEEE AI Chatbot", elem_classes=["welcome-title"])
+                gr.Markdown("Ask me anything about the IEEE Beni Suef Student Branch, societies, chapters, or events!", elem_classes=["welcome-subtitle"])
+                
+                with gr.Row():
+                    card1 = gr.Button("IEEE Beni Suef", elem_classes=["suggestion-card"])
+                    card2 = gr.Button("Computer Society (CS)", elem_classes=["suggestion-card"])
+                    card3 = gr.Button("Computational Intelligence Society (CIS)", elem_classes=["suggestion-card"])
+                    card4 = gr.Button("AESH, T.I.M.E, RYM events", elem_classes=["suggestion-card"])
+
+            chatbot = gr.Chatbot(
+                label="Conversation History",
+                elem_classes=["chatbot-container"],
+            )
+            
+            with gr.Row(elem_classes=["input-row"]):
+                msg_box = gr.Textbox(
+                    placeholder="Ask a question...",
+                    show_label=False,
+                    elem_classes=["input-textbox"],
+                    container=False,
+                )
+                submit_btn = gr.Button("➔", elem_classes=["send-btn"])
+
+            with gr.Row(elem_classes=["feedback-row"]):
+                upvote_btn = gr.Button("👍 Useful", elem_classes=["feedback-btn"])
+                downvote_btn = gr.Button("👎 Unhelpful", elem_classes=["feedback-btn"])
+                clear_btn = gr.Button("🗑️ Clear Chat", elem_classes=["clear-btn"])
+
             feedback_status = gr.Markdown()
             current_run_id = gr.State("")
 
             def user(user_message, history):
-                return "", history + [{"role": "user", "content": user_message}]
+                return "", history + [{"role": "user", "content": user_message}], gr.update(visible=False)
 
             def bot(history):
                 user_message = history[-1]["content"]
@@ -296,14 +545,54 @@ def create_demo() -> gr.Blocks:
                     
                 yield history, run_id
 
-            msg_box.submit(user, [msg_box, chatbot], [msg_box, chatbot], queue=False).then(
-                bot, chatbot, [chatbot, current_run_id]
+            # Setup triggers
+            msg_box.submit(
+                fn=user,
+                inputs=[msg_box, chatbot],
+                outputs=[msg_box, chatbot, welcome_container],
+                queue=False,
+            ).then(
+                fn=bot,
+                inputs=[chatbot],
+                outputs=[chatbot, current_run_id],
             )
-            submit_btn.click(user, [msg_box, chatbot], [msg_box, chatbot], queue=False).then(
-                bot, chatbot, [chatbot, current_run_id]
+            
+            submit_btn.click(
+                fn=user,
+                inputs=[msg_box, chatbot],
+                outputs=[msg_box, chatbot, welcome_container],
+                queue=False,
+            ).then(
+                fn=bot,
+                inputs=[chatbot],
+                outputs=[chatbot, current_run_id],
             )
-            clear_btn.click(lambda: [], None, chatbot, queue=False)
 
+            # Suggestion cards logic
+            def click_card(card_val, history):
+                return history + [{"role": "user", "content": card_val}], gr.update(visible=False)
+
+            for card in [card1, card2, card3, card4]:
+                card.click(
+                    fn=click_card,
+                    inputs=[card, chatbot],
+                    outputs=[chatbot, welcome_container],
+                    queue=False,
+                ).then(
+                    fn=bot,
+                    inputs=[chatbot],
+                    outputs=[chatbot, current_run_id],
+                )
+
+            # Clear button logic
+            clear_btn.click(
+                fn=lambda: ([], gr.update(visible=True)),
+                inputs=None,
+                outputs=[chatbot, welcome_container],
+                queue=False,
+            )
+
+            # Feedback mechanics
             def handle_feedback(run_id, score):
                 if not run_id:
                     return "No response to evaluate yet."
@@ -315,89 +604,7 @@ def create_demo() -> gr.Blocks:
             upvote_btn.click(lambda r: handle_feedback(r, 1.0), inputs=[current_run_id], outputs=[feedback_status])
             downvote_btn.click(lambda r: handle_feedback(r, 0.0), inputs=[current_run_id], outputs=[feedback_status])
 
-        with gr.Tab("📥 Ingestion"):
-            gr.Markdown("Upload documents or crawl a website to index content into the knowledge base.")
-
-            with gr.Group():
-                gr.Markdown("### 📄 Upload Files")
-                uploader = gr.Files(
-                    label="Upload PDF/PPT/DOC/MD/HTML files",
-                    file_count="multiple",
-                    file_types=[".pdf", ".ppt", ".pptx", ".docx", ".doc", ".md", ".html"],
-                )
-                upload_button = gr.Button("Upload + Index", variant="primary")
-                upload_output = gr.Textbox(label="Upload Status", interactive=False)
-                upload_button.click(fn=upload_fn, inputs=[uploader], outputs=[upload_output])
-
-            with gr.Group():
-                gr.Markdown("### 📂 Local Sync")
-                sync_button = gr.Button("Sync docs/pdf, docs/ppt, and docs/doc", variant="secondary")
-                sync_output = gr.Textbox(label="Local Sync Status", interactive=False)
-                sync_button.click(fn=sync_fn, inputs=None, outputs=[sync_output])
-
-            with gr.Group():
-                gr.Markdown("### 🌐 Website Crawl")
-                website_url = gr.Textbox(
-                    label="Website URL",
-                    value=settings.website_default_url,
-                )
-                website_max_pages = gr.Number(
-                    label="Max pages to crawl",
-                    value=settings.website_max_pages,
-                    precision=0,
-                )
-                website_button = gr.Button("Crawl Website + Index", variant="secondary")
-                website_output = gr.Textbox(label="Website Crawl Status", interactive=False)
-                website_button.click(
-                    fn=website_fn,
-                    inputs=[website_url, website_max_pages],
-                    outputs=[website_output],
-                )
-
-            with gr.Group():
-                gr.Markdown("### 📝 Raw Text")
-                text_input = gr.Textbox(
-                    label="Text Content",
-                    lines=5,
-                    placeholder="Paste text here to index into the knowledge base...",
-                )
-                text_source = gr.Textbox(
-                    label="Source Name (Optional)",
-                    placeholder="e.g., meeting_notes_2026.txt",
-                )
-                text_button = gr.Button("Ingest Text", variant="secondary")
-                text_output = gr.Textbox(label="Text Ingestion Status", interactive=False)
-                text_button.click(
-                    fn=text_ingest_fn,
-                    inputs=[text_input, text_source],
-                    outputs=[text_output],
-                )
-
-        with gr.Tab("📊 Status"):
-            gr.Markdown("View current configuration, model status, and LangSmith tracing info.")
-            status_output = gr.Markdown()
-            status_button = gr.Button("Refresh status", variant="primary")
-            status_button.click(fn=status_fn, inputs=None, outputs=[status_output])
-
-        with gr.Tab("📚 Knowledge Base"):
-            gr.Markdown("View statistics and sources currently indexed in the Vector Database.")
-            kb_output = gr.Markdown()
-            kb_button = gr.Button("Refresh KB Stats", variant="primary")
-            kb_button.click(fn=kb_stats_fn, inputs=None, outputs=[kb_output])
-
-        with gr.Tab("📈 Analytics"):
-            gr.Markdown("View LangSmith trace analytics, feedback, and recent runs.")
-            with gr.Row():
-                analytics_fb = gr.Markdown("Loading feedback...")
-                analytics_lat = gr.Markdown("Loading latency...")
-            analytics_runs = gr.Markdown("Loading runs...")
-            analytics_btn = gr.Button("Refresh Analytics", variant="primary")
-            analytics_btn.click(
-                fn=analytics_fn, 
-                inputs=None, 
-                outputs=[analytics_fb, analytics_lat, analytics_runs]
-            )
-
+        # API Endpoints
         api_message = gr.Textbox(visible=False)
         api_output = gr.Textbox(visible=False)
         api_trigger = gr.Button(visible=False)
