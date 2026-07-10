@@ -12,12 +12,12 @@ SRC = ROOT / "src"
 if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
-from ieee_ai_chatbot.ui_gradio import create_demo
+from ieee_ai_chatbot.ui_gradio import create_demo, CSS
 
 
 def main() -> None:
     demo = create_demo()
-    demo.launch(server_name="0.0.0.0", server_port=7860)
+    demo.launch(server_name="0.0.0.0", server_port=7860, css=CSS)
 
 
 if __name__ == "__main__":
