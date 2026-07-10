@@ -25,7 +25,16 @@ if ! hf repo create "$SPACE_ID" --type space --space_sdk gradio >/dev/null 2>&1;
   echo "Space may already exist or could not be created. Continuing to push..."
 fi
 
-HF_REMOTE_URL="https://huggingface.co/spaces/${SPACE_ID}"
+HF_TOKEN="${HF_TOKEN:-}"
+if [[ -z "$HF_TOKEN" && -f "$HOME/.cache/huggingface/token" ]]; then
+  HF_TOKEN="$(cat "$HOME/.cache/huggingface/token")"
+fi
+
+if [[ -n "$HF_TOKEN" ]]; then
+  HF_REMOTE_URL="https://user:${HF_TOKEN}@huggingface.co/spaces/${SPACE_ID}"
+else
+  HF_REMOTE_URL="https://huggingface.co/spaces/${SPACE_ID}"
+fi
 
 if git remote get-url hf >/dev/null 2>&1; then
   git remote set-url hf "$HF_REMOTE_URL"
@@ -34,16 +43,11 @@ else
 fi
 
 if GIT_TERMINAL_PROMPT=0 git push hf "${BRANCH}:main"; then
-  echo "Deployment push finished via git: ${HF_REMOTE_URL}"
+  echo "Deployment push finished via git: https://huggingface.co/spaces/${SPACE_ID}"
   exit 0
 fi
 
 echo "Git push failed; falling back to 'hf upload' (single-commit deploy)."
-
-HF_TOKEN="${HF_TOKEN:-}"
-if [[ -z "$HF_TOKEN" && -f "$HOME/.cache/huggingface/token" ]]; then
-  HF_TOKEN="$(cat "$HOME/.cache/huggingface/token")"
-fi
 
 TOKEN_ARG=()
 if [[ -n "$HF_TOKEN" ]]; then
