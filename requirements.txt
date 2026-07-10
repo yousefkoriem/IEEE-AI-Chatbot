@@ -1,5 +1,5 @@
 # Pinned to versions validated in uv venv (2026-07-10)
-gradio==6.6.0
+gradio>=5.0.0
 langchain==1.2.10
 langchain-community==0.4.1
 langchain-core==1.2.16
