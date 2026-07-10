@@ -15,99 +15,150 @@ from .stats import get_kb_stats
 from .analytics import get_recent_runs, get_feedback_summary, get_latency_stats
 
 
-
+# ─────────────────────────────────────────────────────────────────────
+# MODERN GLASSMORPHIC CSS — IEEE Blue / CS Orange / Gemini Violet
+# ─────────────────────────────────────────────────────────────────────
 CSS = """
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
 
+/* ── Root & Global ─────────────────────────────────────────────────── */
 :root, .gradio-container {
     font-family: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif !important;
-    
-    /* Gradio Theme overrides to support IEEE Blue and CS Orange */
-    --primary-500: #00629B !important;
-    --primary-600: #004b77 !important;
-    --button-primary-background-fill: linear-gradient(135deg, #00629B 0%, #004b77 100%) !important;
-    --button-primary-background-fill-hover: linear-gradient(135deg, #F58220 0%, #d86d12 100%) !important;
+
+    /* IEEE Brand Colors */
+    --ieee-blue: #00629B;
+    --ieee-blue-dark: #004b77;
+    --cs-orange: #F58220;
+    --cs-orange-dark: #d86d12;
+    --gemini-violet: #8E2DE2;
+    --gemini-violet-dark: #6d1fa8;
+
+    /* Gradio theme overrides */
+    --primary-500: var(--ieee-blue) !important;
+    --primary-600: var(--ieee-blue-dark) !important;
+    --button-primary-background-fill: linear-gradient(135deg, var(--ieee-blue) 0%, var(--ieee-blue-dark) 100%) !important;
+    --button-primary-background-fill-hover: linear-gradient(135deg, var(--cs-orange) 0%, var(--cs-orange-dark) 100%) !important;
+    --body-background-fill: transparent !important;
+
+    /* Glass panel variables */
+    --glass-bg: rgba(255, 255, 255, 0.55);
+    --glass-border: rgba(255, 255, 255, 0.30);
+    --glass-shadow: 0 8px 32px rgba(0, 98, 155, 0.08), 0 2px 8px rgba(0, 0, 0, 0.04);
 }
 
+/* ── Page Background ───────────────────────────────────────────────── */
+.gradio-container {
+    background:
+        radial-gradient(ellipse at 15% 15%, rgba(0, 98, 155, 0.10) 0%, transparent 50%),
+        radial-gradient(ellipse at 85% 85%, rgba(142, 45, 226, 0.08) 0%, transparent 50%),
+        radial-gradient(ellipse at 50% 50%, rgba(245, 130, 32, 0.05) 0%, transparent 60%),
+        linear-gradient(160deg, #f0f4f8 0%, #eef2f9 30%, #f5f0fc 60%, #fef7f0 100%) !important;
+    min-height: 100vh !important;
+}
+
+/* ── Glass Panel Base ──────────────────────────────────────────────── */
+.glass-card {
+    background: var(--glass-bg) !important;
+    backdrop-filter: blur(24px) !important;
+    -webkit-backdrop-filter: blur(24px) !important;
+    border: 1px solid var(--glass-border) !important;
+    border-radius: 16px !important;
+    box-shadow: var(--glass-shadow) !important;
+}
+
+/* ── Welcome Section ───────────────────────────────────────────────── */
 .welcome-title {
-    font-size: 3.2rem !important;
+    font-size: 2.8rem !important;
     font-weight: 800 !important;
-    background: linear-gradient(135deg, #00629B 0%, #F58220 50%, #8E2DE2 100%);
+    background: linear-gradient(135deg, var(--ieee-blue) 0%, var(--gemini-violet) 50%, var(--cs-orange) 100%);
     -webkit-background-clip: text !important;
     -webkit-text-fill-color: transparent !important;
     text-align: center !important;
-    margin-top: 2rem !important;
-    margin-bottom: 0.75rem !important;
+    margin-top: 1.5rem !important;
+    margin-bottom: 0.5rem !important;
     letter-spacing: -1px !important;
     line-height: 1.25 !important;
 }
 
 .welcome-subtitle {
-    font-size: 1.4rem !important;
-    color: var(--body-text-color-subdued, #555) !important;
+    font-size: 1.15rem !important;
+    color: #4a5568 !important;
     text-align: center !important;
-    margin-bottom: 2.5rem !important;
+    margin-bottom: 2rem !important;
     font-weight: 400 !important;
+    line-height: 1.6 !important;
 }
 
+/* ── Suggestion Cards ──────────────────────────────────────────────── */
 .suggestion-card {
-    background: var(--block-background-fill, #f8f9fa) !important;
-    border: 1px solid var(--border-color-primary, #e5e7eb) !important;
-    border-radius: 16px !important;
-    padding: 18px 14px !important;
+    background: rgba(255, 255, 255, 0.60) !important;
+    border: 1px solid rgba(0, 98, 155, 0.15) !important;
+    border-radius: 14px !important;
+    padding: 16px 14px !important;
     text-align: center !important;
     cursor: pointer !important;
-    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
-    font-size: 0.95rem !important;
+    transition: all 0.25s cubic-bezier(0.23, 1, 0.32, 1) !important;
+    font-size: 0.9rem !important;
     font-weight: 600 !important;
-    color: var(--body-text-color, #1f2937) !important;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03) !important;
-    min-height: 80px !important;
+    color: #1f2937 !important;
+    box-shadow: 0 4px 12px rgba(0, 98, 155, 0.06), 0 1px 3px rgba(0, 0, 0, 0.03) !important;
+    min-height: 72px !important;
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
 }
 
 .suggestion-card:hover {
-    border-color: #F58220 !important;
-    background: var(--block-background-fill-hover, #ffffff) !important;
+    border-color: var(--cs-orange) !important;
+    background: rgba(255, 255, 255, 0.85) !important;
     transform: translateY(-4px) !important;
-    box-shadow: 0 10px 15px -3px rgba(245, 130, 32, 0.15), 0 4px 6px -2px rgba(245, 130, 32, 0.1) !important;
+    box-shadow: 0 12px 24px rgba(245, 130, 32, 0.15), 0 4px 8px rgba(245, 130, 32, 0.08) !important;
 }
 
+/* ── Chatbot Container ─────────────────────────────────────────────── */
 .chatbot-container {
-    border-radius: 20px !important;
-    border: 1px solid var(--border-color-primary, #e5e7eb) !important;
-    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.05) !important;
+    border-radius: 18px !important;
+    border: 1px solid rgba(0, 98, 155, 0.10) !important;
+    background: rgba(255, 255, 255, 0.50) !important;
+    backdrop-filter: blur(16px) !important;
+    -webkit-backdrop-filter: blur(16px) !important;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04), 0 4px 12px rgba(0, 0, 0, 0.02) !important;
     overflow: hidden !important;
 }
 
-/* Custom chatbot message bubbles reflecting colors */
-.chatbot-container .message.user, .chatbot-container .user {
+/* Custom message bubbles */
+.chatbot-container .message.user,
+.chatbot-container .user {
     background-color: rgba(0, 98, 155, 0.07) !important;
     border: 1px solid rgba(0, 98, 155, 0.12) !important;
+    border-radius: 16px 16px 4px 16px !important;
 }
 
-.chatbot-container .message.bot, .chatbot-container .bot, .chatbot-container .assistant {
+.chatbot-container .message.bot,
+.chatbot-container .bot,
+.chatbot-container .assistant {
     background-color: rgba(245, 130, 32, 0.05) !important;
-    border: 1px solid rgba(245, 130, 32, 0.12) !important;
+    border: 1px solid rgba(245, 130, 32, 0.10) !important;
+    border-radius: 16px 16px 16px 4px !important;
 }
 
+/* ── Input Row ─────────────────────────────────────────────────────── */
 .input-row {
-    background: var(--background-fill-secondary, #f3f4f6) !important;
-    border-radius: 30px !important;
-    padding: 6px 16px !important;
-    border: 1px solid var(--border-color-primary, #e5e7eb) !important;
+    background: rgba(255, 255, 255, 0.65) !important;
+    border-radius: 32px !important;
+    padding: 8px 12px 8px 20px !important;
+    border: 1px solid rgba(0, 98, 155, 0.12) !important;
     display: flex !important;
     align-items: center !important;
-    box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.02) !important;
-    margin-top: 10px !important;
+    box-shadow: 0 2px 8px rgba(0, 98, 155, 0.06), inset 0 1px 2px rgba(255, 255, 255, 0.5) !important;
+    margin-top: 12px !important;
+    transition: all 0.2s ease !important;
 }
 
 .input-row:focus-within {
-    border-color: #00629B !important;
-    background: var(--background-fill-primary, #ffffff) !important;
-    box-shadow: 0 0 0 3px rgba(0, 98, 155, 0.15) !important;
+    border-color: var(--ieee-blue) !important;
+    background: rgba(255, 255, 255, 0.85) !important;
+    box-shadow: 0 0 0 3px rgba(0, 98, 155, 0.12), 0 4px 12px rgba(0, 98, 155, 0.08) !important;
 }
 
 .input-textbox {
@@ -121,87 +172,238 @@ CSS = """
     background: transparent !important;
     border: none !important;
     box-shadow: none !important;
+    font-size: 1rem !important;
+    color: #1f2937 !important;
 }
 
+/* ── Send Button ───────────────────────────────────────────────────── */
 .send-btn {
-    background: linear-gradient(135deg, #00629B 0%, #004b77 100%) !important;
+    background: linear-gradient(135deg, var(--ieee-blue) 0%, var(--ieee-blue-dark) 100%) !important;
     color: white !important;
     border-radius: 50% !important;
     border: none !important;
-    min-width: 42px !important;
-    max-width: 42px !important;
-    height: 42px !important;
+    min-width: 44px !important;
+    max-width: 44px !important;
+    height: 44px !important;
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
-    box-shadow: 0 4px 6px -1px rgba(0, 98, 155, 0.3) !important;
-    transition: all 0.2s ease !important;
+    box-shadow: 0 4px 12px rgba(0, 98, 155, 0.3) !important;
+    transition: all 0.15s ease !important;
     padding: 0 !important;
-    font-size: 1.15rem !important;
+    font-size: 1.2rem !important;
+    margin-left: 4px !important;
 }
 
 .send-btn:hover {
-    background: linear-gradient(135deg, #F58220 0%, #d86d12 100%) !important;
-    box-shadow: 0 4px 10px rgba(245, 130, 32, 0.4) !important;
-    transform: scale(1.05) !important;
+    background: linear-gradient(135deg, var(--cs-orange) 0%, var(--cs-orange-dark) 100%) !important;
+    box-shadow: 0 6px 20px rgba(245, 130, 32, 0.4) !important;
+    transform: scale(1.08) !important;
 }
 
+.send-btn:active {
+    transform: scale(0.95) !important;
+    transition: transform 0.08s ease !important;
+}
+
+/* ── Feedback Row ──────────────────────────────────────────────────── */
 .feedback-row {
     justify-content: center !important;
     gap: 12px !important;
-    margin-top: 8px !important;
+    margin-top: 10px !important;
 }
 
 .feedback-btn {
-    border-radius: 20px !important;
-    font-size: 0.9rem !important;
+    border-radius: 24px !important;
+    font-size: 0.88rem !important;
     font-weight: 600 !important;
-    padding: 6px 16px !important;
-    background: var(--block-background-fill, #f3f4f6) !important;
-    border: 1px solid var(--border-color-primary, #e5e7eb) !important;
-    color: var(--body-text-color, #374151) !important;
+    padding: 7px 18px !important;
+    background: rgba(255, 255, 255, 0.5) !important;
+    border: 1px solid rgba(0, 98, 155, 0.12) !important;
+    color: #374151 !important;
     transition: all 0.2s ease !important;
+    backdrop-filter: blur(8px) !important;
+    -webkit-backdrop-filter: blur(8px) !important;
 }
 
 .feedback-btn:hover {
-    background: var(--background-fill-primary, #ffffff) !important;
-    border-color: #00629B !important;
-    color: #00629B !important;
+    background: rgba(255, 255, 255, 0.8) !important;
+    border-color: var(--ieee-blue) !important;
+    color: var(--ieee-blue) !important;
+    transform: translateY(-1px) !important;
 }
 
 .clear-btn {
-    border-radius: 20px !important;
-    font-size: 0.9rem !important;
+    border-radius: 24px !important;
+    font-size: 0.88rem !important;
     font-weight: 600 !important;
-    padding: 6px 16px !important;
-    background: #fee2e2 !important;
-    border: 1px solid #fca5a5 !important;
+    padding: 7px 18px !important;
+    background: rgba(254, 226, 226, 0.6) !important;
+    border: 1px solid rgba(252, 165, 165, 0.5) !important;
     color: #991b1b !important;
     transition: all 0.2s ease !important;
+    backdrop-filter: blur(8px) !important;
 }
 
 .clear-btn:hover {
-    background: #fecaca !important;
+    background: rgba(254, 202, 202, 0.8) !important;
     color: #7f1d1d !important;
 }
 
-/* Sidebar Tab buttons styling to show Orange and Blue themes */
+/* ── Sidebar Tabs (Tab-based Control Center) ──────────────────────── */
+.sidebar-tabs .tab-nav {
+    display: flex !important;
+    gap: 4px !important;
+    background: rgba(0, 98, 155, 0.04) !important;
+    border-radius: 12px !important;
+    padding: 4px !important;
+    margin-bottom: 16px !important;
+}
+
 .sidebar-tabs .tab-nav button {
-    font-size: 0.85rem !important;
-    padding: 6px 10px !important;
-    border-bottom: 2px solid transparent !important;
-    color: var(--body-text-color-subdued, #555) !important;
+    font-size: 0.82rem !important;
+    padding: 8px 12px !important;
+    border-radius: 8px !important;
+    border: none !important;
+    background: transparent !important;
+    color: #555 !important;
     font-weight: 600 !important;
+    transition: all 0.18s cubic-bezier(0.23, 1, 0.32, 1) !important;
+    flex: 1 !important;
+    text-align: center !important;
 }
 
 .sidebar-tabs .tab-nav button.selected {
-    color: #00629B !important;
-    border-bottom-color: #F58220 !important;
-    background-color: rgba(0, 98, 155, 0.04) !important;
+    color: #ffffff !important;
+    background: linear-gradient(135deg, var(--ieee-blue) 0%, var(--gemini-violet) 100%) !important;
+    box-shadow: 0 2px 8px rgba(0, 98, 155, 0.25) !important;
 }
 
-.sidebar-tabs .tab-nav button:hover {
-    color: #00629B !important;
+.sidebar-tabs .tab-nav button:hover:not(.selected) {
+    color: var(--ieee-blue) !important;
+    background: rgba(0, 98, 155, 0.08) !important;
+}
+
+.sidebar-tabs .tabitem {
+    background: transparent !important;
+    border: none !important;
+    padding: 0 !important;
+}
+
+/* ── Ingestion Tab Groups ──────────────────────────────────────────── */
+.ingest-group {
+    background: rgba(255, 255, 255, 0.45) !important;
+    border: 1px solid rgba(0, 98, 155, 0.08) !important;
+    border-radius: 12px !important;
+    padding: 16px !important;
+    margin-bottom: 14px !important;
+    transition: all 0.2s ease !important;
+}
+
+.ingest-group:hover {
+    background: rgba(255, 255, 255, 0.60) !important;
+    border-color: rgba(0, 98, 155, 0.15) !important;
+}
+
+.ingest-group-title {
+    font-size: 0.85rem !important;
+    font-weight: 700 !important;
+    color: var(--ieee-blue) !important;
+    margin-bottom: 10px !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.5px !important;
+}
+
+/* ── Status & KB Tabs ──────────────────────────────────────────────── */
+.status-card, .kb-card, .analytics-card {
+    background: rgba(255, 255, 255, 0.50) !important;
+    border: 1px solid rgba(0, 98, 155, 0.08) !important;
+    border-radius: 12px !important;
+    padding: 16px !important;
+    margin-bottom: 12px !important;
+}
+
+/* ── Button Styling for Ingestion Tabs ─────────────────────────────── */
+.secondary-btn {
+    background: linear-gradient(135deg, var(--cs-orange) 0%, var(--cs-orange-dark) 100%) !important;
+    color: white !important;
+    border: none !important;
+    border-radius: 10px !important;
+    font-weight: 600 !important;
+    font-size: 0.85rem !important;
+    padding: 8px 16px !important;
+    transition: all 0.15s ease !important;
+    box-shadow: 0 2px 8px rgba(245, 130, 32, 0.2) !important;
+}
+
+.secondary-btn:hover {
+    box-shadow: 0 4px 16px rgba(245, 130, 32, 0.35) !important;
+    transform: translateY(-1px) !important;
+}
+
+.secondary-btn:active {
+    transform: scale(0.97) !important;
+}
+
+/* ── Output Textboxes ──────────────────────────────────────────────── */
+.output-box {
+    background: rgba(245, 248, 252, 0.6) !important;
+    border: 1px solid rgba(0, 98, 155, 0.10) !important;
+    border-radius: 10px !important;
+    font-family: 'JetBrains Mono', monospace !important;
+    font-size: 0.82rem !important;
+    color: #374151 !important;
+    padding: 10px 12px !important;
+}
+
+/* ── Control Center Header ─────────────────────────────────────────── */
+.control-header {
+    font-size: 1.15rem !important;
+    font-weight: 700 !important;
+    background: linear-gradient(135deg, var(--ieee-blue) 0%, var(--gemini-violet) 100%);
+    -webkit-background-clip: text !important;
+    -webkit-text-fill-color: transparent !important;
+    margin-bottom: 12px !important;
+    letter-spacing: -0.3px !important;
+}
+
+/* ── Sidebar Container ─────────────────────────────────────────────── */
+.sidebar-container {
+    background: rgba(255, 255, 255, 0.40) !important;
+    backdrop-filter: blur(32px) !important;
+    -webkit-backdrop-filter: blur(32px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.25) !important;
+    border-radius: 20px !important;
+    padding: 20px !important;
+    box-shadow: 0 8px 32px rgba(0, 98, 155, 0.06), 0 2px 8px rgba(0, 0, 0, 0.03) !important;
+}
+
+/* ── Scrollbar ─────────────────────────────────────────────────────── */
+.gradio-container ::-webkit-scrollbar {
+    width: 6px;
+}
+
+.gradio-container ::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.gradio-container ::-webkit-scrollbar-thumb {
+    background: rgba(0, 98, 155, 0.2);
+    border-radius: 3px;
+}
+
+.gradio-container ::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 98, 155, 0.35);
+}
+
+/* ── Markdown Styling ──────────────────────────────────────────────── */
+.prose-custom p {
+    line-height: 1.7 !important;
+    color: #374151 !important;
+}
+
+.prose-custom strong {
+    color: var(--ieee-blue) !important;
 }
 """
 
@@ -385,16 +587,13 @@ def create_demo() -> gr.Blocks:
         if not settings.langsmith_tracing:
             msg = "LangSmith tracing is disabled. Enable LANGSMITH_TRACING in your environment to see analytics."
             return msg, msg, msg
-        
-        # Feedback summary
+
         fb = get_feedback_summary(settings)
         fb_str = f"**Total Feedback:** {fb['total']} (👍 {fb['up']} | 👎 {fb['down']})"
-        
-        # Latency stats
+
         lat = get_latency_stats(settings)
         lat_str = f"**Average Latency (last 7 days):** {lat['avg_ms']} ms"
-        
-        # Recent runs
+
         runs = get_recent_runs(settings, limit=10)
         if not runs:
             runs_str = "No recent runs found."
@@ -402,7 +601,7 @@ def create_demo() -> gr.Blocks:
             runs_str = "| Time | Question | Latency (ms) | Feedback |\n|---|---|---|---|\n"
             for r in runs:
                 runs_str += f"| {r['time']} | {r['question']} | {r['latency_ms']} | {r['feedback']} |\n"
-                
+
         return fb_str, lat_str, runs_str
 
     def website_fn(url: str, max_pages: int) -> str:
@@ -433,190 +632,256 @@ def create_demo() -> gr.Blocks:
             return f"Text ingestion failed: {error}"
 
     with gr.Blocks(
-        title="IEEE AI RAG Chatbot",
+        title="IEEE AI Chatbot",
+        css=CSS,
+        theme=gr.themes.Default(
+            primary_hue=gr.themes.colors.blue,
+            font=[gr.themes.GoogleFont("Outfit"), "ui-sans-serif", "system-ui", "sans-serif"],
+            font_mono=[gr.themes.GoogleFont("JetBrains Mono"), "ui-monospace", "monospace"],
+        ),
     ) as demo:
-        with gr.Sidebar(label="Control Center", open=True):
-            gr.Markdown("## ⚙️ Control Center")
-            
-            with gr.Tabs(elem_classes=["sidebar-tabs"]):
-                with gr.Tab("📥 Ingestion"):
-                    with gr.Group():
-                        gr.Markdown("### 📄 Upload Files")
-                        uploader = gr.Files(
-                            label="Upload PDF/PPT/DOC/MD/HTML files",
-                            file_count="multiple",
-                            file_types=[".pdf", ".ppt", ".pptx", ".docx", ".doc", ".md", ".html"],
-                        )
-                        upload_button = gr.Button("Upload + Index", variant="primary")
-                        upload_output = gr.Textbox(label="Upload Status", interactive=False)
-                        upload_button.click(fn=upload_fn, inputs=[uploader], outputs=[upload_output])
 
-                    with gr.Group():
-                        gr.Markdown("### 📝 Raw Text")
-                        text_input = gr.Textbox(
-                            label="Text Content",
-                            lines=5,
-                            placeholder="Paste text here to index into the knowledge base...",
+        # ── HEADER / LOGO BAR ─────────────────────────────────────────
+        with gr.Row(elem_classes=["glass-card"], equal_height=False):
+            with gr.Column(scale=0, min_width=60):
+                gr.Markdown(
+                    '<div style="font-size:1.5rem;font-weight:800;background:linear-gradient(135deg,#00629B,#8E2DE2);-webkit-background-clip:text;-webkit-text-fill-color:transparent;display:inline-block;">I</div>',
+                    elem_id="logo-icon",
+                )
+            with gr.Column(scale=1):
+                gr.Markdown(
+                    '<span style="font-size:1.1rem;font-weight:700;color:#1f2937;">IEEE AI Chatbot</span>'
+                    '<br><span style="font-size:0.85rem;color:#555;">IEEE Beni Suef Student Branch</span>',
+                    elem_id="header-title",
+                )
+            with gr.Column(scale=0, min_width=100):
+                gr.Markdown(
+                    '<span style="font-size:0.75rem;color:#8E2DE2;font-weight:600;">⚡ AI Powered</span>',
+                    elem_id="header-badge",
+                )
+
+        # ── MAIN LAYOUT: SIDEBAR + CHAT ──────────────────────────────
+        with gr.Row():
+
+            # ── LEFT: TAB-BASED CONTROL CENTER ──────────────────────
+            with gr.Column(scale=1, elem_classes=["sidebar-container"], min_width=340, max_width=420):
+                gr.Markdown("## ⚙️ Control Center", elem_classes=["control-header"])
+
+                with gr.Tabs(elem_classes=["sidebar-tabs"]):
+
+                    # ── TAB 1: INGESTION ──────────────────────────
+                    with gr.Tab("📥 Ingest"):
+                        # Upload Files
+                        with gr.Group(elem_classes=["ingest-group"]):
+                            gr.Markdown('<span class="ingest-group-title">📄 Upload Files</span>')
+                            uploader = gr.Files(
+                                label="PDF, PPT, DOC, MD, HTML",
+                                file_count="multiple",
+                                file_types=[".pdf", ".ppt", ".pptx", ".docx", ".doc", ".md", ".html"],
+                            )
+                            upload_button = gr.Button("Upload + Index", variant="primary")
+                            upload_output = gr.Textbox(
+                                label="Status",
+                                interactive=False,
+                                elem_classes=["output-box"],
+                            )
+                            upload_button.click(fn=upload_fn, inputs=[uploader], outputs=[upload_output])
+
+                        # Raw Text
+                        with gr.Group(elem_classes=["ingest-group"]):
+                            gr.Markdown('<span class="ingest-group-title">📝 Raw Text</span>')
+                            text_input = gr.Textbox(
+                                label="Text Content",
+                                lines=4,
+                                placeholder="Paste text to index into the knowledge base...",
+                            )
+                            text_source = gr.Textbox(
+                                label="Source Name",
+                                placeholder="e.g., meeting_notes_2026.txt",
+                            )
+                            text_button = gr.Button(
+                                "Ingest Text",
+                                elem_classes=["secondary-btn"],
+                            )
+                            text_output = gr.Textbox(
+                                label="Status",
+                                interactive=False,
+                                elem_classes=["output-box"],
+                            )
+                            text_button.click(
+                                fn=text_ingest_fn,
+                                inputs=[text_input, text_source],
+                                outputs=[text_output],
+                            )
+
+                        # Website Crawl
+                        with gr.Group(elem_classes=["ingest-group"]):
+                            gr.Markdown('<span class="ingest-group-title">🌐 Website Crawl</span>')
+                            website_url = gr.Textbox(
+                                label="URL",
+                                value=settings.website_default_url,
+                            )
+                            website_max_pages = gr.Number(
+                                label="Max pages",
+                                value=settings.website_max_pages,
+                                precision=0,
+                            )
+                            website_button = gr.Button(
+                                "Crawl + Index",
+                                elem_classes=["secondary-btn"],
+                            )
+                            website_output = gr.Textbox(
+                                label="Status",
+                                interactive=False,
+                                elem_classes=["output-box"],
+                            )
+                            website_button.click(
+                                fn=website_fn,
+                                inputs=[website_url, website_max_pages],
+                                outputs=[website_output],
+                            )
+
+                        # Local Sync
+                        with gr.Group(elem_classes=["ingest-group"]):
+                            gr.Markdown('<span class="ingest-group-title">📂 Local Sync</span>')
+                            sync_button = gr.Button(
+                                "Sync Local Docs",
+                                elem_classes=["secondary-btn"],
+                            )
+                            sync_output = gr.Textbox(
+                                label="Status",
+                                interactive=False,
+                                elem_classes=["output-box"],
+                            )
+                            sync_button.click(fn=sync_fn, inputs=None, outputs=[sync_output])
+
+                    # ── TAB 2: STATUS ─────────────────────────────
+                    with gr.Tab("📊 Status"):
+                        status_output = gr.Markdown(
+                            "Click refresh to load agent status.",
+                            elem_classes=["prose-custom"],
                         )
-                        text_source = gr.Textbox(
-                            label="Source Name (Optional)",
-                            placeholder="e.g., meeting_notes_2026.txt",
+                        status_button = gr.Button("Refresh Status", variant="primary")
+                        status_button.click(fn=status_fn, inputs=None, outputs=[status_output])
+
+                    # ── TAB 3: KB INFO ────────────────────────────
+                    with gr.Tab("📚 KB Info"):
+                        kb_output = gr.Markdown(
+                            "Click refresh to load knowledge base stats.",
+                            elem_classes=["prose-custom"],
                         )
-                        text_button = gr.Button("Ingest Text", variant="secondary")
-                        text_output = gr.Textbox(label="Text Ingestion Status", interactive=False)
-                        text_button.click(
-                            fn=text_ingest_fn,
-                            inputs=[text_input, text_source],
-                            outputs=[text_output],
+                        kb_button = gr.Button("Refresh KB Stats", variant="primary")
+                        kb_button.click(fn=kb_stats_fn, inputs=None, outputs=[kb_output])
+
+                    # ── TAB 4: ANALYTICS ──────────────────────────
+                    with gr.Tab("📈 Analytics"):
+                        with gr.Row():
+                            analytics_fb = gr.Markdown(
+                                "Loading feedback...",
+                                elem_classes=["prose-custom"],
+                            )
+                            analytics_lat = gr.Markdown(
+                                "Loading latency...",
+                                elem_classes=["prose-custom"],
+                            )
+                        analytics_runs = gr.Markdown(
+                            "Loading runs...",
+                            elem_classes=["prose-custom"],
+                        )
+                        analytics_btn = gr.Button("Refresh Analytics", variant="primary")
+                        analytics_btn.click(
+                            fn=analytics_fn,
+                            inputs=None,
+                            outputs=[analytics_fb, analytics_lat, analytics_runs],
                         )
 
-                    with gr.Group():
-                        gr.Markdown("### 🌐 Website Crawl")
-                        website_url = gr.Textbox(
-                            label="Website URL",
-                            value=settings.website_default_url,
-                        )
-                        website_max_pages = gr.Number(
-                            label="Max pages to crawl",
-                            value=settings.website_max_pages,
-                            precision=0,
-                        )
-                        website_button = gr.Button("Crawl Website + Index", variant="secondary")
-                        website_output = gr.Textbox(label="Website Crawl Status", interactive=False)
-                        website_button.click(
-                            fn=website_fn,
-                            inputs=[website_url, website_max_pages],
-                            outputs=[website_output],
-                        )
+            # ── RIGHT: MAIN CHAT AREA ───────────────────────────────
+            with gr.Column(scale=3, min_width=500):
 
-                    with gr.Group():
-                        gr.Markdown("### 📂 Local Sync")
-                        sync_button = gr.Button("Sync docs/pdf, docs/ppt, and docs/doc", variant="secondary")
-                        sync_output = gr.Textbox(label="Local Sync Status", interactive=False)
-                        sync_button.click(fn=sync_fn, inputs=None, outputs=[sync_output])
-
-                with gr.Tab("📊 Status"):
-                    status_output = gr.Markdown("Click refresh to load status.")
-                    status_button = gr.Button("Refresh Status", variant="primary")
-                    status_button.click(fn=status_fn, inputs=None, outputs=[status_output])
-
-                with gr.Tab("📚 KB Info"):
-                    kb_output = gr.Markdown("Click refresh to load KB Stats.")
-                    kb_button = gr.Button("Refresh KB Stats", variant="primary")
-                    kb_button.click(fn=kb_stats_fn, inputs=None, outputs=[kb_output])
-
-                with gr.Tab("📈 Analytics"):
-                    with gr.Row():
-                        analytics_fb = gr.Markdown("Loading feedback...")
-                        analytics_lat = gr.Markdown("Loading latency...")
-                    analytics_runs = gr.Markdown("Loading runs...")
-                    analytics_btn = gr.Button("Refresh Analytics", variant="primary")
-                    analytics_btn.click(
-                        fn=analytics_fn, 
-                        inputs=None, 
-                        outputs=[analytics_fb, analytics_lat, analytics_runs]
+                # Welcome Container
+                welcome_container = gr.Column(visible=True)
+                with welcome_container:
+                    gr.Markdown(
+                        "Ask anything about IEEE Beni Suef",
+                        elem_classes=["welcome-title"],
+                    )
+                    gr.Markdown(
+                        "Societies, chapters, events — I'll search the knowledge base and give you accurate answers.",
+                        elem_classes=["welcome-subtitle"],
                     )
 
-        # Main Chat Area
-        with gr.Column():
-            welcome_container = gr.Column(visible=True)
-            with welcome_container:
-                gr.Markdown("IEEE AI Chatbot", elem_classes=["welcome-title"])
-                gr.Markdown("Ask me anything about the IEEE Beni Suef Student Branch, societies, chapters, or events!", elem_classes=["welcome-subtitle"])
-                
-                with gr.Row():
-                    card1 = gr.Button("IEEE Beni Suef", elem_classes=["suggestion-card"])
-                    card2 = gr.Button("Computer Society (CS)", elem_classes=["suggestion-card"])
-                    card3 = gr.Button("Computational Intelligence Society (CIS)", elem_classes=["suggestion-card"])
-                    card4 = gr.Button("AESH, T.I.M.E, RYM events", elem_classes=["suggestion-card"])
+                    with gr.Row():
+                        card1 = gr.Button("IEEE Beni Suef", elem_classes=["suggestion-card"])
+                        card2 = gr.Button("Computer Society", elem_classes=["suggestion-card"])
+                        card3 = gr.Button("CIS Society", elem_classes=["suggestion-card"])
+                        card4 = gr.Button("AESH & Events", elem_classes=["suggestion-card"])
 
-            chatbot = gr.Chatbot(
-                label="Conversation History",
-                elem_classes=["chatbot-container"],
-            )
-            
-            with gr.Row(elem_classes=["input-row"]):
-                msg_box = gr.Textbox(
-                    placeholder="Ask a question...",
-                    show_label=False,
-                    elem_classes=["input-textbox"],
-                    container=False,
+                # Chatbot
+                chatbot = gr.Chatbot(
+                    label="Conversation",
+                    elem_classes=["chatbot-container"],
+                    height=520,
                 )
-                submit_btn = gr.Button("➔", elem_classes=["send-btn"])
 
-            with gr.Row(elem_classes=["feedback-row"]):
-                upvote_btn = gr.Button("👍 Useful", elem_classes=["feedback-btn"])
-                downvote_btn = gr.Button("👎 Unhelpful", elem_classes=["feedback-btn"])
-                clear_btn = gr.Button("🗑️ Clear Chat", elem_classes=["clear-btn"])
+                # Input Row
+                with gr.Row(elem_classes=["input-row"]):
+                    msg_box = gr.Textbox(
+                        placeholder="Ask a question about IEEE Beni Suef...",
+                        show_label=False,
+                        elem_classes=["input-textbox"],
+                        container=False,
+                        scale=9,
+                    )
+                    submit_btn = gr.Button("➔", elem_classes=["send-btn"], scale=1)
 
-            feedback_status = gr.Markdown()
-            current_run_id = gr.State("")
+                # Feedback Row
+                with gr.Row(elem_classes=["feedback-row"]):
+                    upvote_btn = gr.Button("👍 Useful", elem_classes=["feedback-btn"])
+                    downvote_btn = gr.Button("👎 Unhelpful", elem_classes=["feedback-btn"])
+                    clear_btn = gr.Button("🗑️ Clear", elem_classes=["clear-btn"])
 
-            def user(user_message, history):
-                return "", history + [{"role": "user", "content": user_message}], gr.update(visible=False)
+                feedback_status = gr.Markdown()
+                current_run_id = gr.State("")
 
-            def bot(history):
-                user_message = history[-1]["content"]
-                history_text = _history_to_text(history[:-1])
-                
-                history.append({"role": "assistant", "content": ""})
-                
-                run_id = ""
-                sources = []
-                confidence = ""
-                for chunk, src, r_id, conf in agent.answer_stream(user_message, history_text=history_text):
-                    run_id = r_id
-                    sources = src
-                    confidence = conf
-                    history[-1]["content"] += chunk
+                # ── CHAT LOGIC ─────────────────────────────────────
+                def user(user_message, history):
+                    return "", history + [{"role": "user", "content": user_message}], gr.update(visible=False)
+
+                def bot(history):
+                    user_message = history[-1]["content"]
+                    history_text = _history_to_text(history[:-1])
+
+                    history.append({"role": "assistant", "content": ""})
+
+                    run_id = ""
+                    sources = []
+                    confidence = ""
+                    for chunk, src, r_id, conf in agent.answer_stream(user_message, history_text=history_text):
+                        run_id = r_id
+                        sources = src
+                        confidence = conf
+                        history[-1]["content"] += chunk
+                        yield history, run_id
+
+                    if sources and _user_requested_sources(user_message):
+                        source_text = "\n".join(f"- {source}" for source in sources[:8])
+                        history[-1]["content"] += f"\n\n**Sources:**\n{source_text}"
+
+                    if confidence:
+                        badge = "🟢 High" if confidence == "High" else "🟡 Medium" if confidence == "Medium" else "🔴 Low"
+                        if confidence == "Web Search":
+                            badge = "🌐 Web Search"
+                        elif confidence == "None":
+                            badge = "⚪ None"
+                        history[-1]["content"] += f"\n\n*(Retrieval Confidence: {badge})*"
+
                     yield history, run_id
 
-                if sources and _user_requested_sources(user_message):
-                    source_text = "\n".join(f"- {source}" for source in sources[:8])
-                    history[-1]["content"] += f"\n\n**Sources:**\n{source_text}"
-                
-                if confidence:
-                    badge = "🟢 High" if confidence == "High" else "🟡 Medium" if confidence == "Medium" else "🔴 Low"
-                    if confidence == "Web Search":
-                        badge = "🌐 Web Search"
-                    elif confidence == "None":
-                        badge = "⚪ None"
-                    history[-1]["content"] += f"\n\n*(Retrieval Confidence: {badge})*"
-                    
-                yield history, run_id
-
-            # Setup triggers
-            msg_box.submit(
-                fn=user,
-                inputs=[msg_box, chatbot],
-                outputs=[msg_box, chatbot, welcome_container],
-                queue=False,
-            ).then(
-                fn=bot,
-                inputs=[chatbot],
-                outputs=[chatbot, current_run_id],
-            )
-            
-            submit_btn.click(
-                fn=user,
-                inputs=[msg_box, chatbot],
-                outputs=[msg_box, chatbot, welcome_container],
-                queue=False,
-            ).then(
-                fn=bot,
-                inputs=[chatbot],
-                outputs=[chatbot, current_run_id],
-            )
-
-            # Suggestion cards logic
-            def click_card(card_val, history):
-                return history + [{"role": "user", "content": card_val}], gr.update(visible=False)
-
-            for card in [card1, card2, card3, card4]:
-                card.click(
-                    fn=click_card,
-                    inputs=[card, chatbot],
-                    outputs=[chatbot, welcome_container],
+                # Triggers
+                msg_box.submit(
+                    fn=user,
+                    inputs=[msg_box, chatbot],
+                    outputs=[msg_box, chatbot, welcome_container],
                     queue=False,
                 ).then(
                     fn=bot,
@@ -624,27 +889,62 @@ def create_demo() -> gr.Blocks:
                     outputs=[chatbot, current_run_id],
                 )
 
-            # Clear button logic
-            clear_btn.click(
-                fn=lambda: ([], gr.update(visible=True)),
-                inputs=None,
-                outputs=[chatbot, welcome_container],
-                queue=False,
-            )
+                submit_btn.click(
+                    fn=user,
+                    inputs=[msg_box, chatbot],
+                    outputs=[msg_box, chatbot, welcome_container],
+                    queue=False,
+                ).then(
+                    fn=bot,
+                    inputs=[chatbot],
+                    outputs=[chatbot, current_run_id],
+                )
 
-            # Feedback mechanics
-            def handle_feedback(run_id, score):
-                if not run_id:
-                    return "No response to evaluate yet."
-                success = agent.submit_feedback(run_id, score=score)
-                if success:
-                    return "Feedback sent ✓ Thank you!"
-                return "Failed to send feedback. Please check LangSmith tracing is enabled."
+                # Suggestion cards
+                def click_card(card_val, history):
+                    return history + [{"role": "user", "content": card_val}], gr.update(visible=False)
 
-            upvote_btn.click(lambda r: handle_feedback(r, 1.0), inputs=[current_run_id], outputs=[feedback_status])
-            downvote_btn.click(lambda r: handle_feedback(r, 0.0), inputs=[current_run_id], outputs=[feedback_status])
+                for card in [card1, card2, card3, card4]:
+                    card.click(
+                        fn=click_card,
+                        inputs=[card, chatbot],
+                        outputs=[chatbot, welcome_container],
+                        queue=False,
+                    ).then(
+                        fn=bot,
+                        inputs=[chatbot],
+                        outputs=[chatbot, current_run_id],
+                    )
 
-        # API Endpoints
+                # Clear
+                clear_btn.click(
+                    fn=lambda: ([], gr.update(visible=True)),
+                    inputs=None,
+                    outputs=[chatbot, welcome_container],
+                    queue=False,
+                )
+
+                # Feedback
+                def handle_feedback(run_id, score):
+                    if not run_id:
+                        return "No response to evaluate yet."
+                    success = agent.submit_feedback(run_id, score=score)
+                    if success:
+                        return "Feedback sent ✓ Thank you!"
+                    return "Failed to send feedback. Please check LangSmith tracing is enabled."
+
+                upvote_btn.click(
+                    lambda r: handle_feedback(r, 1.0),
+                    inputs=[current_run_id],
+                    outputs=[feedback_status],
+                )
+                downvote_btn.click(
+                    lambda r: handle_feedback(r, 0.0),
+                    inputs=[current_run_id],
+                    outputs=[feedback_status],
+                )
+
+        # ── API ENDPOINTS ─────────────────────────────────────────────
         api_message = gr.Textbox(visible=False)
         api_output = gr.Textbox(visible=False)
         api_trigger = gr.Button(visible=False)
