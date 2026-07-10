@@ -21,12 +21,11 @@ from .analytics import get_recent_runs, get_feedback_summary, get_latency_stats
 CSS = """
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
 
-/* ── Root & Global ─────────────────────────────────────────────────── */
-:root, .gradio-container {
+/* ── Root & Global (Forcing beautiful light mode in both light & dark system modes) ── */
+:root, .dark, .gradio-container, .gradio-container.dark {
     font-family: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif !important;
-    background: transparent !important;
 
-    /* IEEE Brand Colors */
+    /* Brand Colors */
     --ieee-blue: #00629B;
     --ieee-blue-dark: #004b77;
     --cs-orange: #F58220;
@@ -34,33 +33,76 @@ CSS = """
     --gemini-violet: #8E2DE2;
     --gemini-violet-dark: #6d1fa8;
 
-    /* Gradio theme overrides — FORCE LIGHT MODE */
-    --primary-500: var(--ieee-blue) !important;
-    --primary-600: var(--ieee-blue-dark) !important;
+    /* Gradio Theme overrides to force light mode colorways */
     --primary-100: rgba(0, 98, 155, 0.08) !important;
     --primary-200: rgba(0, 98, 155, 0.15) !important;
     --primary-300: rgba(0, 98, 155, 0.25) !important;
+    --primary-500: var(--ieee-blue) !important;
+    --primary-600: var(--ieee-blue-dark) !important;
+    --primary-700: var(--ieee-blue-dark) !important;
+
+    --body-background-fill: linear-gradient(160deg, #f0f4f8 0%, #eef2f9 30%, #f5f0fc 60%, #fef7f0 100%) !important;
+    --body-text-color: #1f2937 !important;
+    --body-text-color-subdued: #4b5563 !important;
+    --block-title-text-color: #1f2937 !important;
+    --block-label-text-color: #1f2937 !important;
+    --block-info-text-color: #4b5563 !important;
+
+    --background-fill-primary: rgba(255, 255, 255, 0.80) !important;
+    --background-fill-secondary: rgba(255, 255, 255, 0.45) !important;
+
+    --block-background-fill: rgba(255, 255, 255, 0.65) !important;
+    --block-border-color: rgba(0, 98, 155, 0.12) !important;
+    
+    --border-color-primary: rgba(0, 98, 155, 0.12) !important;
+    --border-color-secondary: rgba(0, 98, 155, 0.08) !important;
+    
+    --input-background-fill: rgba(255, 255, 255, 0.80) !important;
+    --input-background-fill-focus: #ffffff !important;
+    --input-border-color: rgba(0, 98, 155, 0.15) !important;
+    --input-border-color-focus: var(--ieee-blue) !important;
+    --input-text-color: #1f2937 !important;
+    --input-text-color-focus: #1f2937 !important;
+    --input-placeholder-color: #6b7280 !important;
+    
     --button-primary-background-fill: linear-gradient(135deg, var(--ieee-blue) 0%, var(--ieee-blue-dark) 100%) !important;
     --button-primary-background-fill-hover: linear-gradient(135deg, var(--cs-orange) 0%, var(--cs-orange-dark) 100%) !important;
     --button-primary-text-color: #ffffff !important;
-    --body-background-fill: transparent !important;
-    --body-text-color: #1f2937 !important;
-    --body-text-color-subdued: #555 !important;
-    --block-background-fill: rgba(255, 255, 255, 0.55) !important;
-    --block-background-fill-hover: rgba(255, 255, 255, 0.70) !important;
-    --block-border-color: rgba(0, 98, 155, 0.15) !important;
-    --border-color-primary: rgba(0, 98, 155, 0.15) !important;
-    --border-color-secondary: rgba(0, 98, 155, 0.08) !important;
-    --color-accent: var(--ieee-blue) !important;
-    --color-accent-soft: rgba(0, 98, 155, 0.06) !important;
-    --table-header-color: var(--ieee-blue) !important;
+    
+    --button-secondary-background-fill: linear-gradient(135deg, var(--cs-orange) 0%, var(--cs-orange-dark) 100%) !important;
+    --button-secondary-background-fill-hover: linear-gradient(135deg, var(--ieee-blue) 0%, var(--ieee-blue-dark) 100%) !important;
+    --button-secondary-text-color: #ffffff !important;
 }
 
-/* Force override ALL dark-mode gradio internals */
-.gradio-container .dark,
-.gradio-container .dark * {
-    background: transparent !important;
+/* ── Force Light Text Colors to Overwrite Gradio Dark Mode ── */
+.gradio-container.dark .prose,
+.gradio-container.dark .prose *,
+.gradio-container.dark .tab-nav button,
+.gradio-container.dark .tabitem,
+.gradio-container.dark .form,
+.gradio-container.dark .form *,
+.gradio-container.dark .block,
+.gradio-container.dark .block *,
+.gradio-container.dark .suggestion-card button,
+.gradio-container.dark label,
+.gradio-container.dark span {
     color: #1f2937 !important;
+}
+
+/* Explicit Exemptions for elements that must remain white */
+.gradio-container.dark .header-logo,
+.gradio-container.dark .header-logo *,
+.gradio-container.dark .primary,
+.gradio-container.dark .primary *,
+.gradio-container.dark .send-btn,
+.gradio-container.dark .send-btn * {
+    color: #ffffff !important;
+}
+
+/* Exempt control header gradient */
+.gradio-container.dark .control-header,
+.gradio-container.dark .control-header * {
+    -webkit-text-fill-color: transparent !important;
 }
 
 /* ── Page Background ───────────────────────────────────────────────── */
@@ -141,6 +183,7 @@ CSS = """
     padding: 18px !important;
     box-shadow: 0 8px 32px rgba(0, 98, 155, 0.06), 0 2px 8px rgba(0, 0, 0, 0.03) !important;
     height: 100% !important;
+    max-width: 400px !important;
 }
 
 .control-header {
@@ -292,8 +335,14 @@ CSS = """
 
 /* ── Suggestion Cards ──────────────────────────────────────────────── */
 .suggestion-card {
-    background: rgba(255, 255, 255, 0.65) !important;
-    border: 1px solid rgba(0, 98, 155, 0.12) !important;
+    border: none !important;
+    background: transparent !important;
+    box-shadow: none !important;
+}
+
+.suggestion-card button {
+    background: linear-gradient(145deg, #ffffff 0%, #f8fafc 100%) !important;
+    border: 1px solid rgba(0, 98, 155, 0.15) !important;
     border-radius: 14px !important;
     padding: 14px 10px !important;
     text-align: center !important;
@@ -301,19 +350,18 @@ CSS = """
     transition: all 0.25s cubic-bezier(0.23, 1, 0.32, 1) !important;
     font-size: 0.88rem !important;
     font-weight: 600 !important;
-    color: #1f2937 !important;
+    color: var(--ieee-blue-dark) !important;
     box-shadow: 0 4px 12px rgba(0, 98, 155, 0.06), 0 1px 3px rgba(0, 0, 0, 0.02) !important;
     min-height: 64px !important;
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
-    backdrop-filter: blur(8px) !important;
-    -webkit-backdrop-filter: blur(8px) !important;
 }
 
-.suggestion-card:hover {
+.suggestion-card button:hover {
     border-color: var(--cs-orange) !important;
-    background: rgba(255, 255, 255, 0.85) !important;
+    background: linear-gradient(145deg, #ffffff 0%, #fff7f0 100%) !important;
+    color: var(--cs-orange-dark) !important;
     transform: translateY(-3px) !important;
     box-shadow: 0 10px 20px rgba(245, 130, 32, 0.12), 0 3px 6px rgba(245, 130, 32, 0.06) !important;
 }
@@ -321,11 +369,11 @@ CSS = """
 /* ── Chatbot Container ─────────────────────────────────────────────── */
 .chatbot-container {
     border-radius: 18px !important;
-    border: 1px solid rgba(0, 98, 155, 0.12) !important;
-    background: rgba(255, 255, 255, 0.55) !important;
-    backdrop-filter: blur(16px) !important;
-    -webkit-backdrop-filter: blur(16px) !important;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04), 0 4px 12px rgba(0, 0, 0, 0.02) !important;
+    border: 1px solid rgba(0, 98, 155, 0.18) !important;
+    background: rgba(255, 255, 255, 0.85) !important;
+    backdrop-filter: blur(24px) !important;
+    -webkit-backdrop-filter: blur(24px) !important;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.06), 0 4px 12px rgba(0, 0, 0, 0.03) !important;
     overflow: hidden !important;
 }
 
@@ -498,11 +546,7 @@ CSS = """
     background: rgba(0, 98, 155, 0.30);
 }
 
-/* ── Gradio Overrides — Kill Dark Mode ─────────────────────────────── */
-.gradio-container .form,
-.gradio-container .form * {
-    background: transparent !important;
-}
+/* ── Gradio Overrides ──────────────────────────────────────────────── */
 
 .gradio-container .label-text,
 .gradio-container .label-text span {
@@ -529,6 +573,13 @@ CSS = """
     width: 100% !important;
 }
 """
+
+THEME = gr.themes.Default(
+    primary_hue=gr.themes.colors.blue,
+    neutral_hue=gr.themes.colors.slate,
+    font=[gr.themes.GoogleFont("Outfit"), "ui-sans-serif", "system-ui", "sans-serif"],
+    font_mono=[gr.themes.GoogleFont("JetBrains Mono"), "ui-monospace", "monospace"],
+)
 
 
 def _user_requested_sources(message: str) -> bool:
@@ -756,45 +807,31 @@ def create_demo() -> gr.Blocks:
 
     with gr.Blocks(
         title="IEEE AI Chatbot",
-        css=CSS,
-        theme=gr.themes.Default(
-            primary_hue=gr.themes.colors.blue,
-            neutral_hue=gr.themes.colors.slate,
-            font=[gr.themes.GoogleFont("Outfit"), "ui-sans-serif", "system-ui", "sans-serif"],
-            font_mono=[gr.themes.GoogleFont("JetBrains Mono"), "ui-monospace", "monospace"],
-        ),
     ) as demo:
 
         # ── HEADER BAR ────────────────────────────────────────────────
-        with gr.Row(elem_classes=["glass-card", "header-bar"]):
-            gr.Markdown(
-                '<div style="font-size:1.4rem;font-weight:800;color:#ffffff;">I</div>',
-                elem_id="logo-icon",
-                elem_classes=["header-logo"],
-            )
-            gr.Markdown(
-                '<div style="font-size:1.1rem;font-weight:700;color:#1f2937;line-height:1.3;">IEEE AI Chatbot</div>'
-                '<div style="font-size:0.8rem;color:#555;line-height:1.3;margin-top:2px;">IEEE Beni Suef Student Branch</div>',
-                elem_id="header-title",
-                elem_classes=["header-info"],
-            )
-            gr.Markdown(
-                '<div style="font-size:0.75rem;color:#8E2DE2;font-weight:600;white-space:nowrap;">&#9889; AI Powered</div>',
-                elem_id="header-badge",
-                elem_classes=["header-badge"],
-            )
+        gr.HTML("""
+        <div class="glass-card header-bar">
+            <div class="header-logo">I</div>
+            <div class="header-info">
+                <div class="header-title">IEEE AI Chatbot</div>
+                <div class="header-subtitle">IEEE Beni Suef Student Branch</div>
+            </div>
+            <div class="header-badge">&#9889; AI Powered</div>
+        </div>
+        """)
 
         # ── MAIN LAYOUT: SIDEBAR + CHAT ──────────────────────────────
         with gr.Row():
 
             # ── LEFT: TAB-BASED CONTROL CENTER ──────────────────────
-            with gr.Column(scale=1, elem_classes=["sidebar-container"], min_width=320, max_width=400):
+            with gr.Column(scale=1, elem_classes=["sidebar-container"], min_width=320):
                 gr.Markdown("## &#9881;&#65039; Control Center", elem_classes=["control-header"])
 
                 with gr.Tabs(elem_classes=["sidebar-tabs"]):
 
                     # ── TAB 1: INGESTION ──────────────────────────
-                    with gr.Tab("&#128228; Ingest"):
+                    with gr.Tab("📥 Ingest"):
                         with gr.Group(elem_classes=["ingest-group"]):
                             gr.Markdown('<span class="ingest-group-title">&#128196; Upload Files</span>')
                             uploader = gr.Files(
@@ -876,7 +913,7 @@ def create_demo() -> gr.Blocks:
                             sync_button.click(fn=sync_fn, inputs=None, outputs=[sync_output])
 
                     # ── TAB 2: STATUS ─────────────────────────────
-                    with gr.Tab("&#128202; Status"):
+                    with gr.Tab("📊 Status"):
                         status_output = gr.Markdown(
                             "Click refresh to load agent status.",
                             elem_classes=["prose-custom"],
@@ -885,7 +922,7 @@ def create_demo() -> gr.Blocks:
                         status_button.click(fn=status_fn, inputs=None, outputs=[status_output])
 
                     # ── TAB 3: KB INFO ────────────────────────────
-                    with gr.Tab("&#128218; KB Info"):
+                    with gr.Tab("📚 KB Info"):
                         kb_output = gr.Markdown(
                             "Click refresh to load knowledge base stats.",
                             elem_classes=["prose-custom"],
@@ -894,7 +931,7 @@ def create_demo() -> gr.Blocks:
                         kb_button.click(fn=kb_stats_fn, inputs=None, outputs=[kb_output])
 
                     # ── TAB 4: ANALYTICS ──────────────────────────
-                    with gr.Tab("&#128200; Analytics"):
+                    with gr.Tab("📈 Analytics"):
                         with gr.Row():
                             analytics_fb = gr.Markdown(
                                 "Loading feedback...",
