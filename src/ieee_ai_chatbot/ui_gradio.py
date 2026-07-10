@@ -1250,45 +1250,40 @@ def create_demo() -> gr.Blocks:
 
                             run_id = ""
                             sources = []
-                            confidence = ""
-                            suggestions = []
+                            final_confidence = ""
+                            final_suggestions = []
                             chunk_ids = []
                             html_answer = ""
                             for chunk, src, r_id, conf, sugg, html_a, cids in agent.answer_stream(user_message, history_text=history_text):
                                 run_id = r_id
                                 sources = src
-                                confidence = conf
+                                final_confidence = conf or ""
                                 if sugg:
-                                    suggestions = sugg
+                                    final_suggestions = sugg
                                 if html_a:
                                     html_answer = html_a
                                 if cids:
                                     chunk_ids = cids
                                 history[-1]["content"] += chunk
-                                yield history, run_id, sources, confidence, conv_id, suggestions, chunk_ids
+                                yield history, run_id, sources, final_confidence, conv_id, final_suggestions, chunk_ids
 
-                            history[-1]["content"] = html_answer or history[-1]["content"]
-                            chat_history_mgr.add_message(conv_id, "assistant", history[-1]["content"])
-                            yield history, run_id, sources, confidence, conv_id, suggestions, chunk_ids
-
-                        def format_answer(history, run_id, sources, confidence, suggestions):
-                            if not history or len(history) < 1:
-                                return history, run_id, sources, confidence, suggestions
-                            msg = history[-1]["content"]
-                            has_refs = "References" in msg
+                            msg = html_answer or history[-1]["content"]
+                            has_refs = "\U0001f4da **References" in msg
                             if not has_refs:
                                 if sources and _user_requested_sources(history[-2]["content"] if len(history) >= 2 else ""):
-                                    source_text = "\n".join(f"- {source}" for source in sources[:8])
-                                    msg += f"\n\nSources:\n{source_text}"
-                            if isinstance(confidence, str) and confidence:
-                                emoji = "🟢" if confidence == "High" else "🟡" if confidence == "Medium" else "🔴" if confidence == "Low" else "🌐"
-                                msg += f"\n{emoji} Confidence: {confidence}"
-                            if isinstance(suggestions, list) and suggestions and not has_refs:
-                                safe = [s for s in suggestions if isinstance(s, str) and s.strip()]
+                                    src_text = "\n".join(f"- {s}" for s in sources[:8])
+                                    msg += "\n\nSources:\n" + src_text
+                            if final_confidence:
+                                emoji = "\U0001f7e2" if final_confidence == "High" else "\U0001f7e1" if final_confidence == "Medium" else "\U0001f534" if final_confidence == "Low" else "\U0001f310"
+                                msg += "\n" + emoji + " Confidence: " + final_confidence
+                            if isinstance(final_suggestions, list) and final_suggestions and not has_refs:
+                                safe = [s for s in final_suggestions if isinstance(s, str) and s.strip()]
                                 if safe:
-                                    msg += "\n\nFollow-up:\n" + "\n".join(f"- {s}" for s in safe)
+                                    sep = "\n- "
+                                    msg += "\n\nFollow-up:\n- " + sep.join(safe)
                             history[-1]["content"] = msg
-                            return history, run_id, sources, confidence, suggestions
+                            chat_history_mgr.add_message(conv_id, "assistant", msg)
+                            yield history, run_id, sources, final_confidence, conv_id, final_suggestions, chunk_ids
 
                         def share_last_answer(history, sources, confidence):
                             if not history or len(history) < 2:
@@ -1309,7 +1304,6 @@ def create_demo() -> gr.Blocks:
                         )
 
                         bot_outputs = [chatbot, current_run_id, current_sources, current_confidence, conv_id_state, current_suggestions, current_chunk_ids]
-                        fmt_outputs = [chatbot, current_run_id, current_sources, current_confidence, current_suggestions]
 
                         # Triggers
                         msg_box.submit(
@@ -1321,10 +1315,6 @@ def create_demo() -> gr.Blocks:
                             fn=bot,
                             inputs=[chatbot, conv_id_state, session_key_state],
                             outputs=bot_outputs,
-                        ).then(
-                            fn=format_answer,
-                            inputs=[chatbot, current_run_id, current_sources, current_confidence, current_suggestions],
-                            outputs=fmt_outputs,
                         )
 
                         submit_btn.click(
@@ -1336,10 +1326,6 @@ def create_demo() -> gr.Blocks:
                             fn=bot,
                             inputs=[chatbot, conv_id_state, session_key_state],
                             outputs=bot_outputs,
-                        ).then(
-                            fn=format_answer,
-                            inputs=[chatbot, current_run_id, current_sources, current_confidence, current_suggestions],
-                            outputs=fmt_outputs,
                         )
 
                         # Suggestion cards
@@ -1358,10 +1344,6 @@ def create_demo() -> gr.Blocks:
                                 fn=bot,
                                 inputs=[chatbot, conv_id_state, session_key_state],
                                 outputs=bot_outputs,
-                            ).then(
-                                fn=format_answer,
-                                inputs=[chatbot, current_run_id, current_sources, current_confidence, current_suggestions],
-                                outputs=fmt_outputs,
                             )
 
                         # Clear
@@ -1414,38 +1396,45 @@ def create_demo() -> gr.Blocks:
                             history_text = _history_to_text(history[:-1])
                             run_id = ""
                             sources = []
-                            confidence = ""
-                            suggestions = []
+                            final_confidence = ""
+                            final_suggestions = []
                             chunk_ids = []
                             html_answer = ""
                             for chunk, src, r_id, conf, sugg, html_a, cids in agent.answer_stream(last_user_msg, history_text=history_text):
                                 run_id = r_id
                                 sources = src
-                                confidence = conf
+                                final_confidence = conf or ""
                                 if sugg:
-                                    suggestions = sugg
+                                    final_suggestions = sugg
                                 if html_a:
                                     html_answer = html_a
                                 if cids:
                                     chunk_ids = cids
                                 history[-1]["content"] += chunk
-                                yield history, run_id, sources, confidence, conv_id, suggestions, chunk_ids
-                            history[-1]["content"] = html_answer or history[-1]["content"]
-                            chat_history_mgr.add_message(conv_id, "assistant", history[-1]["content"])
-                            yield history, run_id, sources, confidence, conv_id, suggestions, chunk_ids
-
-                        def format_regenerated(history, run_id, sources, confidence, suggestions):
-                            return format_answer(history, run_id, sources, confidence, suggestions)
+                                yield history, run_id, sources, final_confidence, conv_id, final_suggestions, chunk_ids
+                            msg = html_answer or history[-1]["content"]
+                            has_refs = "\U0001f4da **References" in msg
+                            if not has_refs:
+                                if sources and _user_requested_sources(history[-2]["content"] if len(history) >= 2 else ""):
+                                    src_text = "\n".join(f"- {s}" for s in sources[:8])
+                                    msg += "\n\nSources:\n" + src_text
+                            if final_confidence:
+                                emoji = "\U0001f7e2" if final_confidence == "High" else "\U0001f7e1" if final_confidence == "Medium" else "\U0001f534" if final_confidence == "Low" else "\U0001f310"
+                                msg += "\n" + emoji + " Confidence: " + final_confidence
+                            if isinstance(final_suggestions, list) and final_suggestions and not has_refs:
+                                safe = [s for s in final_suggestions if isinstance(s, str) and s.strip()]
+                                if safe:
+                                    sep = "\n- "
+                                    msg += "\n\nFollow-up:\n- " + sep.join(safe)
+                            history[-1]["content"] = msg
+                            chat_history_mgr.add_message(conv_id, "assistant", msg)
+                            yield history, run_id, sources, final_confidence, conv_id, final_suggestions, chunk_ids
 
                         regenerate_btn.click(
                             fn=regenerate_last,
                             inputs=[chatbot, conv_id_state, session_key_state],
                             outputs=bot_outputs,
                             queue=False,
-                        ).then(
-                            fn=format_regenerated,
-                            inputs=[chatbot, current_run_id, current_sources, current_confidence, current_suggestions],
-                            outputs=fmt_outputs,
                         )
 
                         # Edit - copy last user message to input, remove last pair
