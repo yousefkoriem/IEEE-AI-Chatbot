@@ -21,108 +21,104 @@ from .analytics import get_recent_runs, get_feedback_summary, get_latency_stats
 CSS = """
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
 
-/* ── Root & Global (Forcing beautiful light mode in both light & dark system modes) ── */
+/* ── Root & Global (Forcing beautiful DARK mode) ── */
 :root, .dark, .gradio-container, .gradio-container.dark {
     font-family: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif !important;
 
     /* Brand Colors */
-    --ieee-blue: #00629B;
-    --ieee-blue-dark: #004b77;
-    --cs-orange: #F58220;
-    --cs-orange-dark: #d86d12;
-    --gemini-violet: #8E2DE2;
-    --gemini-violet-dark: #6d1fa8;
+    --ieee-blue: #0088D6; /* Brightened for dark mode */
+    --ieee-blue-dark: #00629B;
+    --cs-orange: #F89B48; /* Brightened for dark mode */
+    --cs-orange-dark: #F58220;
+    --gemini-violet: #A855F7; /* Brightened */
+    --gemini-violet-dark: #8E2DE2;
 
-    /* Gradio Theme overrides to force light mode colorways */
-    --primary-100: rgba(0, 98, 155, 0.08) !important;
-    --primary-200: rgba(0, 98, 155, 0.15) !important;
-    --primary-300: rgba(0, 98, 155, 0.25) !important;
-    --primary-500: var(--ieee-blue) !important;
-    --primary-600: var(--ieee-blue-dark) !important;
-    --primary-700: var(--ieee-blue-dark) !important;
+    /* Base theme colors */
+    --body-background-fill: #090E17 !important;
+    --body-text-color: #F8FAFC !important;
+    --body-text-color-subdued: #94A3B8 !important;
+    --block-title-text-color: #F8FAFC !important;
+    --block-label-text-color: #E2E8F0 !important;
+    --block-info-text-color: #94A3B8 !important;
 
-    --body-background-fill: linear-gradient(160deg, #f0f4f8 0%, #eef2f9 30%, #f5f0fc 60%, #fef7f0 100%) !important;
-    --body-text-color: #1f2937 !important;
-    --body-text-color-subdued: #4b5563 !important;
-    --block-title-text-color: #1f2937 !important;
-    --block-label-text-color: #1f2937 !important;
-    --block-info-text-color: #4b5563 !important;
-
-    --background-fill-primary: rgba(255, 255, 255, 0.80) !important;
-    --background-fill-secondary: rgba(255, 255, 255, 0.45) !important;
-
-    --block-background-fill: rgba(255, 255, 255, 0.65) !important;
-    --block-border-color: rgba(0, 98, 155, 0.12) !important;
+    /* Panels and Blocks */
+    --background-fill-primary: rgba(30, 41, 59, 0.45) !important;
+    --background-fill-secondary: rgba(15, 23, 42, 0.6) !important;
+    --block-background-fill: rgba(30, 41, 59, 0.45) !important;
     
-    --border-color-primary: rgba(0, 98, 155, 0.12) !important;
-    --border-color-secondary: rgba(0, 98, 155, 0.08) !important;
+    /* Borders */
+    --border-color-primary: rgba(255, 255, 255, 0.1) !important;
+    --border-color-secondary: rgba(255, 255, 255, 0.05) !important;
+    --block-border-color: rgba(255, 255, 255, 0.1) !important;
     
-    --input-background-fill: rgba(255, 255, 255, 0.80) !important;
-    --input-background-fill-focus: #ffffff !important;
-    --input-border-color: rgba(0, 98, 155, 0.15) !important;
+    /* Inputs */
+    --input-background-fill: rgba(15, 23, 42, 0.7) !important;
+    --input-background-fill-focus: rgba(30, 41, 59, 0.9) !important;
+    --input-border-color: rgba(255, 255, 255, 0.15) !important;
     --input-border-color-focus: var(--ieee-blue) !important;
-    --input-text-color: #1f2937 !important;
-    --input-text-color-focus: #1f2937 !important;
-    --input-placeholder-color: #6b7280 !important;
+    --input-text-color: #F8FAFC !important;
+    --input-text-color-focus: #FFFFFF !important;
+    --input-placeholder-color: #64748B !important;
     
-    --button-primary-background-fill: linear-gradient(135deg, var(--ieee-blue) 0%, var(--ieee-blue-dark) 100%) !important;
-    --button-primary-background-fill-hover: linear-gradient(135deg, var(--cs-orange) 0%, var(--cs-orange-dark) 100%) !important;
+    /* Buttons */
+    --button-primary-background-fill: linear-gradient(135deg, var(--ieee-blue-dark) 0%, var(--ieee-blue) 100%) !important;
+    --button-primary-background-fill-hover: linear-gradient(135deg, var(--cs-orange-dark) 0%, var(--cs-orange) 100%) !important;
     --button-primary-text-color: #ffffff !important;
-    
-    --button-secondary-background-fill: linear-gradient(135deg, var(--cs-orange) 0%, var(--cs-orange-dark) 100%) !important;
-    --button-secondary-background-fill-hover: linear-gradient(135deg, var(--ieee-blue) 0%, var(--ieee-blue-dark) 100%) !important;
-    --button-secondary-text-color: #ffffff !important;
+    --button-secondary-background-fill: rgba(255, 255, 255, 0.05) !important;
+    --button-secondary-background-fill-hover: rgba(255, 255, 255, 0.1) !important;
+    --button-secondary-text-color: #F8FAFC !important;
 }
 
-/* ── Force Light Text Colors to Overwrite Gradio Dark Mode ── */
-.gradio-container.dark .prose,
-.gradio-container.dark .prose *,
-.gradio-container.dark .tab-nav button,
-.gradio-container.dark .tabitem,
-.gradio-container.dark .form,
-.gradio-container.dark .form *,
-.gradio-container.dark .block,
-.gradio-container.dark .block *,
-.gradio-container.dark .suggestion-card button,
-.gradio-container.dark label,
-.gradio-container.dark span {
-    color: #1f2937 !important;
+/* ── Overrides to Ensure Text is Visible in Dark Theme ── */
+.gradio-container,
+.gradio-container *,
+.gradio-container .prose,
+.gradio-container .prose *,
+.gradio-container .tab-nav button,
+.gradio-container .tabitem,
+.gradio-container .form,
+.gradio-container .form *,
+.gradio-container .block,
+.gradio-container .block *,
+.gradio-container label,
+.gradio-container span {
+    color: var(--body-text-color) !important;
 }
 
-/* Explicit Exemptions for elements that must remain white */
-.gradio-container.dark .header-logo,
-.gradio-container.dark .header-logo *,
-.gradio-container.dark .primary,
-.gradio-container.dark .primary *,
-.gradio-container.dark .send-btn,
-.gradio-container.dark .send-btn * {
+.gradio-container .header-logo,
+.gradio-container .header-logo *,
+.gradio-container .primary,
+.gradio-container .primary *,
+.gradio-container .send-btn,
+.gradio-container .send-btn * {
     color: #ffffff !important;
 }
 
-/* Exempt control header gradient */
-.gradio-container.dark .control-header,
-.gradio-container.dark .control-header * {
-    -webkit-text-fill-color: transparent !important;
+/* Ensure SVG icons inside buttons remain visible */
+.gradio-container button svg {
+    fill: currentColor !important;
+    color: inherit !important;
 }
 
 /* ── Page Background ───────────────────────────────────────────────── */
 .gradio-container {
     background:
-        radial-gradient(ellipse at 15% 15%, rgba(0, 98, 155, 0.10) 0%, transparent 50%),
-        radial-gradient(ellipse at 85% 85%, rgba(142, 45, 226, 0.08) 0%, transparent 50%),
-        radial-gradient(ellipse at 50% 50%, rgba(245, 130, 32, 0.05) 0%, transparent 60%),
-        linear-gradient(160deg, #f0f4f8 0%, #eef2f9 30%, #f5f0fc 60%, #fef7f0 100%) !important;
+        radial-gradient(ellipse at 15% 15%, rgba(0, 136, 214, 0.10) 0%, transparent 50%),
+        radial-gradient(ellipse at 85% 85%, rgba(168, 85, 247, 0.08) 0%, transparent 50%),
+        radial-gradient(ellipse at 50% 50%, rgba(248, 155, 72, 0.05) 0%, transparent 60%),
+        var(--body-background-fill) !important;
     min-height: 100vh !important;
+    color: var(--body-text-color) !important;
 }
 
 /* ── Glass Panel Base ──────────────────────────────────────────────── */
 .glass-card {
-    background: rgba(255, 255, 255, 0.60) !important;
+    background: rgba(30, 41, 59, 0.4) !important;
     backdrop-filter: blur(24px) !important;
     -webkit-backdrop-filter: blur(24px) !important;
-    border: 1px solid rgba(255, 255, 255, 0.35) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
     border-radius: 16px !important;
-    box-shadow: 0 8px 32px rgba(0, 98, 155, 0.08), 0 2px 8px rgba(0, 0, 0, 0.04) !important;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), 0 2px 8px rgba(0, 0, 0, 0.1) !important;
     padding: 12px 20px !important;
 }
 
@@ -139,14 +135,13 @@ CSS = """
 .header-logo {
     width: 44px !important;
     height: 44px !important;
-    background: linear-gradient(135deg, #00629B, #8E2DE2) !important;
+    background: linear-gradient(135deg, var(--cs-orange), var(--cs-orange-dark)) !important;
     border-radius: 12px !important;
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
     font-size: 1.4rem !important;
     font-weight: 800 !important;
-    color: white !important;
     flex-shrink: 0 !important;
 }
 
@@ -154,34 +149,33 @@ CSS = """
     flex: 1 !important;
 }
 
-.header-title {
+.header-title, .header-title * {
     font-size: 1.2rem !important;
     font-weight: 700 !important;
-    color: #1f2937 !important;
+    color: var(--cs-orange) !important;
     margin-bottom: 2px !important;
 }
 
-.header-subtitle {
+.header-subtitle, .header-subtitle * {
     font-size: 0.82rem !important;
-    color: #555 !important;
+    color: var(--ieee-blue) !important;
 }
 
 .header-badge {
     font-size: 0.75rem !important;
-    color: var(--gemini-violet) !important;
+    color: var(--cs-orange) !important;
     font-weight: 600 !important;
     white-space: nowrap !important;
 }
-
 /* ── Sidebar Container ─────────────────────────────────────────────── */
 .sidebar-container {
-    background: rgba(255, 255, 255, 0.45) !important;
+    background: rgba(30, 41, 59, 0.4) !important;
     backdrop-filter: blur(28px) !important;
     -webkit-backdrop-filter: blur(28px) !important;
-    border: 1px solid rgba(255, 255, 255, 0.30) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
     border-radius: 20px !important;
     padding: 18px !important;
-    box-shadow: 0 8px 32px rgba(0, 98, 155, 0.06), 0 2px 8px rgba(0, 0, 0, 0.03) !important;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3) !important;
     height: 100% !important;
     max-width: 400px !important;
 }
@@ -189,9 +183,7 @@ CSS = """
 .control-header {
     font-size: 1.1rem !important;
     font-weight: 700 !important;
-    background: linear-gradient(135deg, var(--ieee-blue) 0%, var(--gemini-violet) 100%);
-    -webkit-background-clip: text !important;
-    -webkit-text-fill-color: transparent !important;
+    color: var(--cs-orange) !important;
     margin-bottom: 14px !important;
     letter-spacing: -0.3px !important;
 }
@@ -200,7 +192,7 @@ CSS = """
 .sidebar-tabs .tab-nav {
     display: flex !important;
     gap: 3px !important;
-    background: rgba(0, 98, 155, 0.04) !important;
+    background: rgba(0, 0, 0, 0.2) !important;
     border-radius: 12px !important;
     padding: 3px !important;
     margin-bottom: 16px !important;
@@ -214,9 +206,9 @@ CSS = """
     border-radius: 8px !important;
     border: none !important;
     background: transparent !important;
-    color: #666 !important;
+    color: var(--body-text-color-subdued) !important;
     font-weight: 600 !important;
-    transition: all 0.18s cubic-bezier(0.23, 1, 0.32, 1) !important;
+    transition: all 0.18s ease !important;
     flex: 1 0 auto !important;
     text-align: center !important;
     white-space: nowrap !important;
@@ -225,13 +217,13 @@ CSS = """
 
 .sidebar-tabs .tab-nav button.selected {
     color: #ffffff !important;
-    background: linear-gradient(135deg, var(--ieee-blue) 0%, var(--gemini-violet) 100%) !important;
-    box-shadow: 0 2px 8px rgba(0, 98, 155, 0.25) !important;
+    background: linear-gradient(135deg, var(--ieee-blue-dark) 0%, var(--gemini-violet-dark) 100%) !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3) !important;
 }
 
 .sidebar-tabs .tab-nav button:hover:not(.selected) {
     color: var(--ieee-blue) !important;
-    background: rgba(0, 98, 155, 0.08) !important;
+    background: rgba(255, 255, 255, 0.05) !important;
 }
 
 .sidebar-tabs .tabitem {
@@ -242,8 +234,8 @@ CSS = """
 
 /* ── Ingestion Groups ──────────────────────────────────────────────── */
 .ingest-group {
-    background: rgba(255, 255, 255, 0.50) !important;
-    border: 1px solid rgba(0, 98, 155, 0.08) !important;
+    background: rgba(15, 23, 42, 0.4) !important;
+    border: 1px solid rgba(255, 255, 255, 0.05) !important;
     border-radius: 12px !important;
     padding: 14px !important;
     margin-bottom: 12px !important;
@@ -251,8 +243,8 @@ CSS = """
 }
 
 .ingest-group:hover {
-    background: rgba(255, 255, 255, 0.65) !important;
-    border-color: rgba(0, 98, 155, 0.15) !important;
+    background: rgba(15, 23, 42, 0.6) !important;
+    border-color: rgba(255, 255, 255, 0.1) !important;
 }
 
 .ingest-group-title {
@@ -266,20 +258,20 @@ CSS = """
 
 /* ── File Upload Override ──────────────────────────────────────────── */
 .upload-area {
-    background: rgba(0, 98, 155, 0.04) !important;
-    border: 2px dashed rgba(0, 98, 155, 0.25) !important;
+    background: rgba(15, 23, 42, 0.5) !important;
+    border: 2px dashed rgba(255, 255, 255, 0.15) !important;
     border-radius: 10px !important;
     transition: all 0.2s ease !important;
 }
 
 .upload-area:hover {
-    background: rgba(0, 98, 155, 0.08) !important;
+    background: rgba(30, 41, 59, 0.7) !important;
     border-color: var(--ieee-blue) !important;
 }
 
 /* ── Buttons ───────────────────────────────────────────────────────── */
 .secondary-btn {
-    background: linear-gradient(135deg, var(--cs-orange) 0%, var(--cs-orange-dark) 100%) !important;
+    background: linear-gradient(135deg, var(--cs-orange-dark) 0%, var(--cs-orange) 100%) !important;
     color: white !important;
     border: none !important;
     border-radius: 10px !important;
@@ -287,11 +279,11 @@ CSS = """
     font-size: 0.82rem !important;
     padding: 7px 14px !important;
     transition: all 0.15s ease !important;
-    box-shadow: 0 2px 8px rgba(245, 130, 32, 0.2) !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3) !important;
 }
 
 .secondary-btn:hover {
-    box-shadow: 0 4px 16px rgba(245, 130, 32, 0.35) !important;
+    box-shadow: 0 4px 16px rgba(245, 130, 32, 0.4) !important;
     transform: translateY(-1px) !important;
 }
 
@@ -301,22 +293,20 @@ CSS = """
 
 /* ── Output Boxes ──────────────────────────────────────────────────── */
 .output-box {
-    background: rgba(245, 248, 252, 0.6) !important;
-    border: 1px solid rgba(0, 98, 155, 0.10) !important;
+    background: rgba(15, 23, 42, 0.7) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
     border-radius: 10px !important;
     font-family: 'JetBrains Mono', monospace !important;
     font-size: 0.80rem !important;
-    color: #374151 !important;
+    color: #E2E8F0 !important;
     padding: 8px 12px !important;
 }
 
 /* ── Welcome Section ───────────────────────────────────────────────── */
-.welcome-title {
-    font-size: 2.4rem !important;
-    font-weight: 800 !important;
-    background: linear-gradient(135deg, var(--ieee-blue) 0%, var(--gemini-violet) 50%, var(--cs-orange) 100%);
-    -webkit-background-clip: text !important;
-    -webkit-text-fill-color: transparent !important;
+.welcome-title, .welcome-title * {
+    font-size: 1.8rem !important;
+    font-weight: 900 !important;
+    color: var(--gemini-violet) !important;
     text-align: center !important;
     margin-top: 1rem !important;
     margin-bottom: 0.5rem !important;
@@ -326,7 +316,7 @@ CSS = """
 
 .welcome-subtitle {
     font-size: 1.05rem !important;
-    color: #4a5568 !important;
+    color: var(--body-text-color-subdued) !important;
     text-align: center !important;
     margin-bottom: 1.5rem !important;
     font-weight: 400 !important;
@@ -340,83 +330,40 @@ CSS = """
     box-shadow: none !important;
 }
 
-.suggestion-card button {
-    background: linear-gradient(145deg, #ffffff 0%, #f8fafc 100%) !important;
-    border: 1px solid rgba(0, 98, 155, 0.15) !important;
+.suggestion-card, .suggestion-card button {
+    background: rgba(30, 41, 59, 0.4) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
     border-radius: 14px !important;
     padding: 14px 10px !important;
     text-align: center !important;
     cursor: pointer !important;
-    transition: all 0.25s cubic-bezier(0.23, 1, 0.32, 1) !important;
+    transition: all 0.25s ease !important;
     font-size: 0.88rem !important;
     font-weight: 600 !important;
-    color: var(--ieee-blue-dark) !important;
-    box-shadow: 0 4px 12px rgba(0, 98, 155, 0.06), 0 1px 3px rgba(0, 0, 0, 0.02) !important;
+    color: var(--body-text-color) !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2) !important;
     min-height: 64px !important;
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
+    backdrop-filter: blur(8px) !important;
 }
 
-.suggestion-card button:hover {
+.suggestion-card:hover, .suggestion-card button:hover {
     border-color: var(--cs-orange) !important;
-    background: linear-gradient(145deg, #ffffff 0%, #fff7f0 100%) !important;
-    color: var(--cs-orange-dark) !important;
-    transform: translateY(-3px) !important;
-    box-shadow: 0 10px 20px rgba(245, 130, 32, 0.12), 0 3px 6px rgba(245, 130, 32, 0.06) !important;
-}
-
-/* ── Chatbot Container ─────────────────────────────────────────────── */
-.chatbot-container {
-    border-radius: 18px !important;
-    border: 1px solid rgba(0, 98, 155, 0.18) !important;
-    background: rgba(255, 255, 255, 0.85) !important;
-    backdrop-filter: blur(24px) !important;
-    -webkit-backdrop-filter: blur(24px) !important;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.06), 0 4px 12px rgba(0, 0, 0, 0.03) !important;
-    overflow: hidden !important;
-}
-
-/* Chatbot inner elements — force light */
-.chatbot-container .wrap,
-.chatbot-container .wrap-inner,
-.chatbot-container .empty,
-.chatbot-container .messages,
-.chatbot-container .message-wrapper {
-    background: transparent !important;
-}
-
-/* Message bubbles */
-.chatbot-container .message.user,
-.chatbot-container .user {
-    background-color: rgba(0, 98, 155, 0.07) !important;
-    border: 1px solid rgba(0, 98, 155, 0.12) !important;
-    border-radius: 16px 16px 4px 16px !important;
-}
-
-.chatbot-container .message.bot,
-.chatbot-container .bot,
-.chatbot-container .assistant {
-    background-color: rgba(245, 130, 32, 0.05) !important;
-    border: 1px solid rgba(245, 130, 32, 0.10) !important;
-    border-radius: 16px 16px 16px 4px !important;
-}
-
-/* Chatbot text */
-.chatbot-container .message,
-.chatbot-container .message * {
-    color: #1f2937 !important;
+    background: rgba(30, 41, 59, 0.8) !important;
+    color: var(--cs-orange) !important;
 }
 
 /* ── Input Row ─────────────────────────────────────────────────────── */
 .input-row {
-    background: rgba(255, 255, 255, 0.70) !important;
+    background: rgba(30, 41, 59, 0.6) !important;
     border-radius: 32px !important;
     padding: 6px 10px 6px 18px !important;
-    border: 1px solid rgba(0, 98, 155, 0.12) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
     display: flex !important;
     align-items: center !important;
-    box-shadow: 0 2px 8px rgba(0, 98, 155, 0.06), inset 0 1px 2px rgba(255, 255, 255, 0.5) !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2) !important;
     margin-top: 10px !important;
     transition: all 0.2s ease !important;
     backdrop-filter: blur(8px) !important;
@@ -424,8 +371,8 @@ CSS = """
 
 .input-row:focus-within {
     border-color: var(--ieee-blue) !important;
-    background: rgba(255, 255, 255, 0.90) !important;
-    box-shadow: 0 0 0 3px rgba(0, 98, 155, 0.12), 0 4px 12px rgba(0, 98, 155, 0.08) !important;
+    background: rgba(30, 41, 59, 0.9) !important;
+    box-shadow: 0 0 0 1px var(--ieee-blue), 0 4px 16px rgba(0, 0, 0, 0.4) !important;
 }
 
 .input-textbox {
@@ -440,12 +387,12 @@ CSS = """
     border: none !important;
     box-shadow: none !important;
     font-size: 0.95rem !important;
-    color: #1f2937 !important;
+    color: var(--body-text-color) !important;
 }
 
 /* ── Send Button ───────────────────────────────────────────────────── */
 .send-btn {
-    background: linear-gradient(135deg, var(--ieee-blue) 0%, var(--ieee-blue-dark) 100%) !important;
+    background: linear-gradient(135deg, var(--ieee-blue-dark) 0%, var(--ieee-blue) 100%) !important;
     color: white !important;
     border-radius: 50% !important;
     border: none !important;
@@ -455,7 +402,7 @@ CSS = """
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
-    box-shadow: 0 4px 12px rgba(0, 98, 155, 0.3) !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
     transition: all 0.15s ease !important;
     padding: 0 !important;
     font-size: 1.1rem !important;
@@ -463,14 +410,13 @@ CSS = """
 }
 
 .send-btn:hover {
-    background: linear-gradient(135deg, var(--cs-orange) 0%, var(--cs-orange-dark) 100%) !important;
-    box-shadow: 0 6px 20px rgba(245, 130, 32, 0.4) !important;
+    background: linear-gradient(135deg, var(--cs-orange-dark) 0%, var(--cs-orange) 100%) !important;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5) !important;
     transform: scale(1.08) !important;
 }
 
 .send-btn:active {
     transform: scale(0.95) !important;
-    transition: transform 0.08s ease !important;
 }
 
 /* ── Feedback Row ──────────────────────────────────────────────────── */
@@ -485,16 +431,15 @@ CSS = """
     font-size: 0.82rem !important;
     font-weight: 600 !important;
     padding: 6px 16px !important;
-    background: rgba(255, 255, 255, 0.5) !important;
-    border: 1px solid rgba(0, 98, 155, 0.12) !important;
-    color: #374151 !important;
+    background: rgba(255, 255, 255, 0.05) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    color: var(--body-text-color-subdued) !important;
     transition: all 0.2s ease !important;
     backdrop-filter: blur(8px) !important;
-    -webkit-backdrop-filter: blur(8px) !important;
 }
 
 .feedback-btn:hover {
-    background: rgba(255, 255, 255, 0.8) !important;
+    background: rgba(255, 255, 255, 0.15) !important;
     border-color: var(--ieee-blue) !important;
     color: var(--ieee-blue) !important;
     transform: translateY(-1px) !important;
@@ -505,21 +450,21 @@ CSS = """
     font-size: 0.82rem !important;
     font-weight: 600 !important;
     padding: 6px 16px !important;
-    background: rgba(254, 226, 226, 0.6) !important;
-    border: 1px solid rgba(252, 165, 165, 0.5) !important;
-    color: #991b1b !important;
+    background: rgba(239, 68, 68, 0.1) !important;
+    border: 1px solid rgba(239, 68, 68, 0.2) !important;
+    color: #FCA5A5 !important;
     transition: all 0.2s ease !important;
     backdrop-filter: blur(8px) !important;
 }
 
 .clear-btn:hover {
-    background: rgba(254, 202, 202, 0.8) !important;
-    color: #7f1d1d !important;
+    background: rgba(239, 68, 68, 0.2) !important;
+    color: #FECACA !important;
 }
 
 /* ── Status / KB / Analytics ───────────────────────────────────────── */
 .prose-custom {
-    color: #374151 !important;
+    color: var(--body-text-color-subdued) !important;
     font-size: 0.88rem !important;
     line-height: 1.7 !important;
 }
@@ -538,34 +483,33 @@ CSS = """
 }
 
 .gradio-container ::-webkit-scrollbar-thumb {
-    background: rgba(0, 98, 155, 0.18);
+    background: rgba(255, 255, 255, 0.1);
     border-radius: 3px;
 }
 
 .gradio-container ::-webkit-scrollbar-thumb:hover {
-    background: rgba(0, 98, 155, 0.30);
+    background: rgba(255, 255, 255, 0.2);
 }
 
 /* ── Gradio Overrides ──────────────────────────────────────────────── */
-
 .gradio-container .label-text,
 .gradio-container .label-text span {
-    color: #1f2937 !important;
+    color: var(--body-text-color) !important;
     font-weight: 500 !important;
 }
 
 .gradio-container input,
 .gradio-container textarea {
-    background: rgba(255, 255, 255, 0.6) !important;
-    border: 1px solid rgba(0, 98, 155, 0.12) !important;
+    background: var(--input-background-fill) !important;
+    border: 1px solid var(--input-border-color) !important;
     border-radius: 8px !important;
-    color: #1f2937 !important;
+    color: var(--body-text-color) !important;
     font-family: 'Outfit', sans-serif !important;
 }
 
 .gradio-container input::placeholder,
 .gradio-container textarea::placeholder {
-    color: #999 !important;
+    color: var(--input-placeholder-color) !important;
 }
 
 /* Tabs inside sidebar — ensure all 4 tabs are visible */
@@ -817,23 +761,194 @@ def create_demo() -> gr.Blocks:
                 <div class="header-title">IEEE AI Chatbot</div>
                 <div class="header-subtitle">IEEE Beni Suef Student Branch</div>
             </div>
-            <div class="header-badge">&#9889; AI Powered</div>
+            <div class="header-badge">⚡ AI Powered</div>
         </div>
         """)
 
-        # ── MAIN LAYOUT: SIDEBAR + CHAT ──────────────────────────────
-        with gr.Row():
+        # ── MAIN LAYOUT: TOP-LEVEL TABS ──────────────────────────────
+        with gr.Tabs(elem_classes=["top-tabs"]):
 
-            # ── LEFT: TAB-BASED CONTROL CENTER ──────────────────────
-            with gr.Column(scale=1, elem_classes=["sidebar-container"], min_width=320):
-                gr.Markdown("## &#9881;&#65039; Control Center", elem_classes=["control-header"])
+            # ── TOP TAB: CHAT ──────────────────────────
+            with gr.Tab("💬 Chat"):
+                with gr.Row():
 
-                with gr.Tabs(elem_classes=["sidebar-tabs"]):
+                    # ── LEFT: SIDEBAR (Control Center) ──────────────────────
+                    with gr.Column(scale=1, elem_classes=["sidebar-container"], min_width=320):
+                        gr.Markdown("## ⚙️ Control Center", elem_classes=["control-header"])
 
-                    # ── TAB 1: INGESTION ──────────────────────────
-                    with gr.Tab("📥 Ingest"):
+                        gr.Markdown("### 📊 Status", elem_classes=["prose-custom"])
+                        status_output = gr.Markdown(
+                            "Click refresh to load agent status.",
+                            elem_classes=["prose-custom"],
+                        )
+                        status_button = gr.Button("Refresh Status", variant="primary")
+                        status_button.click(fn=status_fn, inputs=None, outputs=[status_output])
+
+                        gr.HTML("<hr style='border-color: rgba(255,255,255,0.1); margin: 15px 0;'>")
+
+                        gr.Markdown("### 📚 Knowledge Base", elem_classes=["prose-custom"])
+                        kb_output = gr.Markdown(
+                            "Click refresh to load knowledge base stats.",
+                            elem_classes=["prose-custom"],
+                        )
+                        kb_button = gr.Button("Refresh KB Stats", variant="primary")
+                        kb_button.click(fn=kb_stats_fn, inputs=None, outputs=[kb_output])
+
+                    # ── RIGHT: MAIN CHAT AREA ───────────────────────────────
+                    with gr.Column(scale=3, min_width=500):
+
+                        # Welcome Container
+                        welcome_container = gr.Column(visible=True)
+                        with welcome_container:
+                            gr.Markdown(
+                                "Ask anything about IEEE Beni Suef",
+                                elem_classes=["welcome-title"],
+                            )
+                            gr.Markdown(
+                                "Societies, chapters, events — I'll search the knowledge base and give you accurate answers.",
+                                elem_classes=["welcome-subtitle"],
+                            )
+
+                            with gr.Row():
+                                card1 = gr.Button("IEEE Beni Suef", elem_classes=["suggestion-card"])
+                                card2 = gr.Button("Computer Society", elem_classes=["suggestion-card"])
+                                card3 = gr.Button("CIS Society", elem_classes=["suggestion-card"])
+                                card4 = gr.Button("AESH & Events", elem_classes=["suggestion-card"])
+
+                        # Chatbot
+                        chatbot = gr.Chatbot(
+                            label="Conversation",
+                            elem_classes=["chatbot-container"],
+                            height=480,
+                        )
+
+                        # Input Row
+                        with gr.Row(elem_classes=["input-row"]):
+                            msg_box = gr.Textbox(
+                                placeholder="Ask a question about IEEE Beni Suef...",
+                                show_label=False,
+                                elem_classes=["input-textbox"],
+                                container=False,
+                                scale=9,
+                            )
+                            submit_btn = gr.Button("➤", elem_classes=["send-btn"], scale=1)
+
+                        # Feedback Row
+                        with gr.Row(elem_classes=["feedback-row"]):
+                            upvote_btn = gr.Button("👍 Useful", elem_classes=["feedback-btn"])
+                            downvote_btn = gr.Button("👎 Unhelpful", elem_classes=["feedback-btn"])
+                            clear_btn = gr.Button("🗑️ Clear", elem_classes=["clear-btn"])
+
+                        feedback_status = gr.Markdown()
+                        current_run_id = gr.State("")
+
+                        # ── CHAT LOGIC ─────────────────────────────────────
+                        def user(user_message, history):
+                            return "", history + [{"role": "user", "content": user_message}], gr.update(visible=False)
+
+                        def bot(history):
+                            user_message = history[-1]["content"]
+                            history_text = _history_to_text(history[:-1])
+
+                            history.append({"role": "assistant", "content": ""})
+
+                            run_id = ""
+                            sources = []
+                            confidence = ""
+                            for chunk, src, r_id, conf in agent.answer_stream(user_message, history_text=history_text):
+                                run_id = r_id
+                                sources = src
+                                confidence = conf
+                                history[-1]["content"] += chunk
+                                yield history, run_id
+
+                            if sources and _user_requested_sources(user_message):
+                                source_text = "\n".join(f"- {source}" for source in sources[:8])
+                                history[-1]["content"] += f"\n\n**Sources:**\n{source_text}"
+
+                            if confidence:
+                                badge = "High" if confidence == "High" else "Medium" if confidence == "Medium" else "Low"
+                                if confidence == "Web Search":
+                                    badge = "Web Search"
+                                elif confidence == "None":
+                                    badge = "None"
+                                history[-1]["content"] += f"\n\n*(Retrieval Confidence: {badge})*"
+
+                            yield history, run_id
+
+                        # Triggers
+                        msg_box.submit(
+                            fn=user,
+                            inputs=[msg_box, chatbot],
+                            outputs=[msg_box, chatbot, welcome_container],
+                            queue=False,
+                        ).then(
+                            fn=bot,
+                            inputs=[chatbot],
+                            outputs=[chatbot, current_run_id],
+                        )
+
+                        submit_btn.click(
+                            fn=user,
+                            inputs=[msg_box, chatbot],
+                            outputs=[msg_box, chatbot, welcome_container],
+                            queue=False,
+                        ).then(
+                            fn=bot,
+                            inputs=[chatbot],
+                            outputs=[chatbot, current_run_id],
+                        )
+
+                        # Suggestion cards
+                        def click_card(card_val, history):
+                            return history + [{"role": "user", "content": card_val}], gr.update(visible=False)
+
+                        for card in [card1, card2, card3, card4]:
+                            card.click(
+                                fn=click_card,
+                                inputs=[card, chatbot],
+                                outputs=[chatbot, welcome_container],
+                                queue=False,
+                            ).then(
+                                fn=bot,
+                                inputs=[chatbot],
+                                outputs=[chatbot, current_run_id],
+                            )
+
+                        # Clear
+                        clear_btn.click(
+                            fn=lambda: ([], gr.update(visible=True)),
+                            inputs=None,
+                            outputs=[chatbot, welcome_container],
+                            queue=False,
+                        )
+
+                        # Feedback
+                        def handle_feedback(run_id, score):
+                            if not run_id:
+                                return "No response to evaluate yet."
+                            success = agent.submit_feedback(run_id, score=score)
+                            if success:
+                                return "Feedback sent! Thank you."
+                            return "Failed to send feedback. Check LangSmith tracing."
+
+                        upvote_btn.click(
+                            lambda r: handle_feedback(r, 1.0),
+                            inputs=[current_run_id],
+                            outputs=[feedback_status],
+                        )
+                        downvote_btn.click(
+                            lambda r: handle_feedback(r, 0.0),
+                            inputs=[current_run_id],
+                            outputs=[feedback_status],
+                        )
+
+        # ── TOP TAB: INGEST ──────────────────────────
+            with gr.Tab("📥 Ingest"):
+                with gr.Row():
+                    with gr.Column(scale=1):
                         with gr.Group(elem_classes=["ingest-group"]):
-                            gr.Markdown('<span class="ingest-group-title">&#128196; Upload Files</span>')
+                            gr.Markdown('<span class="ingest-group-title">📄 Upload Files</span>')
                             uploader = gr.Files(
                                 label="PDF, PPT, DOC, MD, HTML",
                                 file_count="multiple",
@@ -846,9 +961,23 @@ def create_demo() -> gr.Blocks:
                                 elem_classes=["output-box"],
                             )
                             upload_button.click(fn=upload_fn, inputs=[uploader], outputs=[upload_output])
-
+                            
                         with gr.Group(elem_classes=["ingest-group"]):
-                            gr.Markdown('<span class="ingest-group-title">&#128221; Raw Text</span>')
+                            gr.Markdown('<span class="ingest-group-title">📁 Local Sync</span>')
+                            sync_button = gr.Button(
+                                "Sync Local Docs",
+                                elem_classes=["secondary-btn"],
+                            )
+                            sync_output = gr.Textbox(
+                                label="Status",
+                                interactive=False,
+                                elem_classes=["output-box"],
+                            )
+                            sync_button.click(fn=sync_fn, inputs=None, outputs=[sync_output])
+
+                    with gr.Column(scale=1):
+                        with gr.Group(elem_classes=["ingest-group"]):
+                            gr.Markdown('<span class="ingest-group-title">📝 Raw Text</span>')
                             text_input = gr.Textbox(
                                 label="Text Content",
                                 lines=3,
@@ -872,9 +1001,9 @@ def create_demo() -> gr.Blocks:
                                 inputs=[text_input, text_source],
                                 outputs=[text_output],
                             )
-
+                            
                         with gr.Group(elem_classes=["ingest-group"]):
-                            gr.Markdown('<span class="ingest-group-title">&#127760; Website Crawl</span>')
+                            gr.Markdown('<span class="ingest-group-title">🌐 Website Crawl</span>')
                             website_url = gr.Textbox(
                                 label="URL",
                                 value=settings.website_default_url,
@@ -899,207 +1028,28 @@ def create_demo() -> gr.Blocks:
                                 outputs=[website_output],
                             )
 
-                        with gr.Group(elem_classes=["ingest-group"]):
-                            gr.Markdown('<span class="ingest-group-title">&#128193; Local Sync</span>')
-                            sync_button = gr.Button(
-                                "Sync Local Docs",
-                                elem_classes=["secondary-btn"],
-                            )
-                            sync_output = gr.Textbox(
-                                label="Status",
-                                interactive=False,
-                                elem_classes=["output-box"],
-                            )
-                            sync_button.click(fn=sync_fn, inputs=None, outputs=[sync_output])
-
-                    # ── TAB 2: STATUS ─────────────────────────────
-                    with gr.Tab("📊 Status"):
-                        status_output = gr.Markdown(
-                            "Click refresh to load agent status.",
-                            elem_classes=["prose-custom"],
-                        )
-                        status_button = gr.Button("Refresh Status", variant="primary")
-                        status_button.click(fn=status_fn, inputs=None, outputs=[status_output])
-
-                    # ── TAB 3: KB INFO ────────────────────────────
-                    with gr.Tab("📚 KB Info"):
-                        kb_output = gr.Markdown(
-                            "Click refresh to load knowledge base stats.",
-                            elem_classes=["prose-custom"],
-                        )
-                        kb_button = gr.Button("Refresh KB Stats", variant="primary")
-                        kb_button.click(fn=kb_stats_fn, inputs=None, outputs=[kb_output])
-
-                    # ── TAB 4: ANALYTICS ──────────────────────────
-                    with gr.Tab("📈 Analytics"):
-                        with gr.Row():
-                            analytics_fb = gr.Markdown(
-                                "Loading feedback...",
-                                elem_classes=["prose-custom"],
-                            )
-                            analytics_lat = gr.Markdown(
-                                "Loading latency...",
-                                elem_classes=["prose-custom"],
-                            )
-                        analytics_runs = gr.Markdown(
-                            "Loading runs...",
-                            elem_classes=["prose-custom"],
-                        )
-                        analytics_btn = gr.Button("Refresh Analytics", variant="primary")
-                        analytics_btn.click(
-                            fn=analytics_fn,
-                            inputs=None,
-                            outputs=[analytics_fb, analytics_lat, analytics_runs],
-                        )
-
-            # ── RIGHT: MAIN CHAT AREA ───────────────────────────────
-            with gr.Column(scale=3, min_width=500):
-
-                # Welcome Container
-                welcome_container = gr.Column(visible=True)
-                with welcome_container:
-                    gr.Markdown(
-                        "Ask anything about IEEE Beni Suef",
-                        elem_classes=["welcome-title"],
-                    )
-                    gr.Markdown(
-                        "Societies, chapters, events — I'll search the knowledge base and give you accurate answers.",
-                        elem_classes=["welcome-subtitle"],
-                    )
-
+            # ── TOP TAB: ANALYTICS ──────────────────────────
+            with gr.Tab("📈 Analytics"):
+                with gr.Column(elem_classes=["glass-card"]):
                     with gr.Row():
-                        card1 = gr.Button("IEEE Beni Suef", elem_classes=["suggestion-card"])
-                        card2 = gr.Button("Computer Society", elem_classes=["suggestion-card"])
-                        card3 = gr.Button("CIS Society", elem_classes=["suggestion-card"])
-                        card4 = gr.Button("AESH & Events", elem_classes=["suggestion-card"])
-
-                # Chatbot
-                chatbot = gr.Chatbot(
-                    label="Conversation",
-                    elem_classes=["chatbot-container"],
-                    height=480,
-                )
-
-                # Input Row
-                with gr.Row(elem_classes=["input-row"]):
-                    msg_box = gr.Textbox(
-                        placeholder="Ask a question about IEEE Beni Suef...",
-                        show_label=False,
-                        elem_classes=["input-textbox"],
-                        container=False,
-                        scale=9,
+                        analytics_fb = gr.Markdown(
+                            "Loading feedback...",
+                            elem_classes=["prose-custom"],
+                        )
+                        analytics_lat = gr.Markdown(
+                            "Loading latency...",
+                            elem_classes=["prose-custom"],
+                        )
+                    analytics_runs = gr.Markdown(
+                        "Loading runs...",
+                        elem_classes=["prose-custom"],
                     )
-                    submit_btn = gr.Button("&#10148;", elem_classes=["send-btn"], scale=1)
-
-                # Feedback Row
-                with gr.Row(elem_classes=["feedback-row"]):
-                    upvote_btn = gr.Button("&#128077; Useful", elem_classes=["feedback-btn"])
-                    downvote_btn = gr.Button("&#128078; Unhelpful", elem_classes=["feedback-btn"])
-                    clear_btn = gr.Button("&#128465;&#65039; Clear", elem_classes=["clear-btn"])
-
-                feedback_status = gr.Markdown()
-                current_run_id = gr.State("")
-
-                # ── CHAT LOGIC ─────────────────────────────────────
-                def user(user_message, history):
-                    return "", history + [{"role": "user", "content": user_message}], gr.update(visible=False)
-
-                def bot(history):
-                    user_message = history[-1]["content"]
-                    history_text = _history_to_text(history[:-1])
-
-                    history.append({"role": "assistant", "content": ""})
-
-                    run_id = ""
-                    sources = []
-                    confidence = ""
-                    for chunk, src, r_id, conf in agent.answer_stream(user_message, history_text=history_text):
-                        run_id = r_id
-                        sources = src
-                        confidence = conf
-                        history[-1]["content"] += chunk
-                        yield history, run_id
-
-                    if sources and _user_requested_sources(user_message):
-                        source_text = "\n".join(f"- {source}" for source in sources[:8])
-                        history[-1]["content"] += f"\n\n**Sources:**\n{source_text}"
-
-                    if confidence:
-                        badge = "High" if confidence == "High" else "Medium" if confidence == "Medium" else "Low"
-                        if confidence == "Web Search":
-                            badge = "Web Search"
-                        elif confidence == "None":
-                            badge = "None"
-                        history[-1]["content"] += f"\n\n*(Retrieval Confidence: {badge})*"
-
-                    yield history, run_id
-
-                # Triggers
-                msg_box.submit(
-                    fn=user,
-                    inputs=[msg_box, chatbot],
-                    outputs=[msg_box, chatbot, welcome_container],
-                    queue=False,
-                ).then(
-                    fn=bot,
-                    inputs=[chatbot],
-                    outputs=[chatbot, current_run_id],
-                )
-
-                submit_btn.click(
-                    fn=user,
-                    inputs=[msg_box, chatbot],
-                    outputs=[msg_box, chatbot, welcome_container],
-                    queue=False,
-                ).then(
-                    fn=bot,
-                    inputs=[chatbot],
-                    outputs=[chatbot, current_run_id],
-                )
-
-                # Suggestion cards
-                def click_card(card_val, history):
-                    return history + [{"role": "user", "content": card_val}], gr.update(visible=False)
-
-                for card in [card1, card2, card3, card4]:
-                    card.click(
-                        fn=click_card,
-                        inputs=[card, chatbot],
-                        outputs=[chatbot, welcome_container],
-                        queue=False,
-                    ).then(
-                        fn=bot,
-                        inputs=[chatbot],
-                        outputs=[chatbot, current_run_id],
+                    analytics_btn = gr.Button("Refresh Analytics", variant="primary")
+                    analytics_btn.click(
+                        fn=analytics_fn,
+                        inputs=None,
+                        outputs=[analytics_fb, analytics_lat, analytics_runs],
                     )
-
-                # Clear
-                clear_btn.click(
-                    fn=lambda: ([], gr.update(visible=True)),
-                    inputs=None,
-                    outputs=[chatbot, welcome_container],
-                    queue=False,
-                )
-
-                # Feedback
-                def handle_feedback(run_id, score):
-                    if not run_id:
-                        return "No response to evaluate yet."
-                    success = agent.submit_feedback(run_id, score=score)
-                    if success:
-                        return "Feedback sent! Thank you."
-                    return "Failed to send feedback. Check LangSmith tracing."
-
-                upvote_btn.click(
-                    lambda r: handle_feedback(r, 1.0),
-                    inputs=[current_run_id],
-                    outputs=[feedback_status],
-                )
-                downvote_btn.click(
-                    lambda r: handle_feedback(r, 0.0),
-                    inputs=[current_run_id],
-                    outputs=[feedback_status],
-                )
 
         # ── API ENDPOINTS ─────────────────────────────────────────────
         api_message = gr.Textbox(visible=False)
