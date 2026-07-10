@@ -408,6 +408,14 @@ CSS = """
 """
 
 
+
+THEME = gr.themes.Default(
+    primary_hue=gr.themes.colors.blue,
+    font=[gr.themes.GoogleFont("Outfit"), "ui-sans-serif", "system-ui", "sans-serif"],
+    font_mono=[gr.themes.GoogleFont("JetBrains Mono"), "ui-monospace", "monospace"],
+)
+
+
 def _user_requested_sources(message: str) -> bool:
     prompt = message.lower()
     source_triggers = [
@@ -633,12 +641,6 @@ def create_demo() -> gr.Blocks:
 
     with gr.Blocks(
         title="IEEE AI Chatbot",
-        css=CSS,
-        theme=gr.themes.Default(
-            primary_hue=gr.themes.colors.blue,
-            font=[gr.themes.GoogleFont("Outfit"), "ui-sans-serif", "system-ui", "sans-serif"],
-            font_mono=[gr.themes.GoogleFont("JetBrains Mono"), "ui-monospace", "monospace"],
-        ),
     ) as demo:
 
         # ── HEADER / LOGO BAR ─────────────────────────────────────────
@@ -664,7 +666,7 @@ def create_demo() -> gr.Blocks:
         with gr.Row():
 
             # ── LEFT: TAB-BASED CONTROL CENTER ──────────────────────
-            with gr.Column(scale=1, elem_classes=["sidebar-container"], min_width=340, max_width=420):
+            with gr.Column(scale=1, elem_classes=["sidebar-container"], min_width=340):
                 gr.Markdown("## ⚙️ Control Center", elem_classes=["control-header"])
 
                 with gr.Tabs(elem_classes=["sidebar-tabs"]):
