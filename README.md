@@ -4,10 +4,10 @@ emoji: 🤖
 colorFrom: blue
 colorTo: indigo
 sdk: gradio
-sdk_version: 6.6.0
+sdk_version: "6.6.0"
 app_file: app.py
 pinned: false
-python_version: 3.11
+python_version: "3.11"
 ---
 
 # IEEE-AI-Chatbot
@@ -15,7 +15,7 @@ python_version: 3.11
 RAG chatbot for answering questions about IEEE Beni Suef Student Branch using:
 
 - LangChain for retrieval + response orchestration
-- Google GenAI `gemini-2.5-flash-lite` for chat generation
+- Google GenAI `gemini-2.5-flash` for chat generation
 - Pinecone as vector database (dynamic upsert/update/delete)
 - LangSmith for tracing/status
 - Gradio UI for hosting locally and on Hugging Face Spaces
