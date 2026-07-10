@@ -24,7 +24,6 @@ RAG chatbot for answering questions about IEEE Beni Suef Student Branch using:
 
 ```text
 app.py
-main.py
 src/ieee_ai_chatbot/
 	config.py
 	vectorstore.py
@@ -33,6 +32,10 @@ src/ieee_ai_chatbot/
 	prompts.py
 	chat.py
 	ui_gradio.py
+tests/
+	test_config.py
+	test_prompts.py
+	test_ingest.py
 docs/
 	architecture.md
 	deployment_hf_spaces.md

@@ -1,15 +1,21 @@
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass
 
 from .config import Settings
+
+logger = logging.getLogger(__name__)
 
 
 DEFAULT_SYSTEM_PROMPT = (
     "You are an assistant for IEEE Beni Suef Student Branch. "
     "Prefer factual, direct answers and avoid unnecessary disclaimers. "
     "For date-sensitive facts (deadlines, event dates, schedules), only state a specific date when it appears in retrieved context. "
-    "If retrieved context is missing or ambiguous, say that the date cannot be verified from current indexed data and ask the user to refresh sources."
+    "If retrieved context is missing or ambiguous, say that the date cannot be verified from current indexed data and ask the user to refresh sources. "
+    "When context includes multiple dates, match the date to the requested activity label. "
+    "For deadline questions, prioritize lines containing terms like deadline, close, registration close, due, or final date. "
+    "Do not answer with a date from unrelated activities."
 )
 
 CONTEXT_AVAILABLE_INSTRUCTION = (
@@ -42,8 +48,6 @@ def validate_prompt_config(config: PromptConfig) -> None:
 
 
 def build_system_prompt(settings: Settings) -> str:
-    if not settings.chat_model.strip():
-        raise ValueError("chat_model cannot be empty when building system prompt")
     return DEFAULT_SYSTEM_PROMPT
 
 

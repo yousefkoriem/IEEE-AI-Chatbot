@@ -1,14 +1,18 @@
 from __future__ import annotations
 
 import json
+import logging
 from pathlib import Path
 from typing import Any
 
+logger = logging.getLogger(__name__)
 import gradio as gr
 
 from .chat import RAGAgent
 from .config import Settings
 from .ingest import ingest_files, ingest_website, sync_local_docs
+from .stats import get_kb_stats
+from .analytics import get_recent_runs, get_feedback_summary, get_latency_stats
 
 
 def _user_requested_sources(message: str) -> bool:
@@ -103,7 +107,7 @@ def create_demo() -> gr.Blocks:
         history: list[dict[str, str]] | list[list[str]] | None = None,
     ) -> str:
         history_text = _history_to_text(history)
-        answer, sources = agent.answer(message, history_text=history_text)
+        answer, sources, _, _ = agent.answer(message, history_text=history_text)
         if not sources or not _user_requested_sources(message):
             return answer
         source_text = "\n".join(f"- {source}" for source in sources[:8])
@@ -168,6 +172,48 @@ def create_demo() -> gr.Blocks:
         lines = [f"- {key}: {value}" for key, value in status.items()]
         return "\n".join(lines)
 
+    def kb_stats_fn() -> str:
+        stats = get_kb_stats(settings)
+        lines = [
+            f"**Total Sources:** {stats['total_sources']}",
+            f"**Total Chunks:** {stats['total_chunks']}",
+            f"**Last Sync:** {stats['last_sync']}",
+            "",
+            "**Origins:**",
+            f"- Local: {stats['origins'].get('local', 0)}",
+            f"- Upload: {stats['origins'].get('upload', 0)}",
+            f"- Website: {stats['origins'].get('website', 0)}",
+            "",
+            "**Sources:**"
+        ]
+        for src in stats['source_names']:
+            lines.append(f"- {src}")
+        return "\n".join(lines)
+
+    def analytics_fn() -> tuple[str, str, str]:
+        if not settings.langsmith_tracing:
+            msg = "LangSmith tracing is disabled. Enable LANGSMITH_TRACING in your environment to see analytics."
+            return msg, msg, msg
+        
+        # Feedback summary
+        fb = get_feedback_summary(settings)
+        fb_str = f"**Total Feedback:** {fb['total']} (👍 {fb['up']} | 👎 {fb['down']})"
+        
+        # Latency stats
+        lat = get_latency_stats(settings)
+        lat_str = f"**Average Latency (last 7 days):** {lat['avg_ms']} ms"
+        
+        # Recent runs
+        runs = get_recent_runs(settings, limit=10)
+        if not runs:
+            runs_str = "No recent runs found."
+        else:
+            runs_str = "| Time | Question | Latency (ms) | Feedback |\n|---|---|---|---|\n"
+            for r in runs:
+                runs_str += f"| {r['time']} | {r['question']} | {r['latency_ms']} | {r['feedback']} |\n"
+                
+        return fb_str, lat_str, runs_str
+
     def website_fn(url: str, max_pages: int) -> str:
         target_url = (url or settings.website_default_url).strip()
         if not target_url:
@@ -182,48 +228,147 @@ def create_demo() -> gr.Blocks:
         except Exception as error:
             return f"Website crawl failed: {error}"
 
-    with gr.Blocks(title="IEEE AI RAG Chatbot") as demo:
-        gr.Markdown("# IEEE AI RAG Chatbot")
+    with gr.Blocks(
+        title="IEEE AI RAG Chatbot",
+        theme=gr.themes.Soft(
+            primary_hue=gr.themes.colors.blue,
+            secondary_hue=gr.themes.colors.indigo,
+        ),
+    ) as demo:
+        gr.Markdown(
+            "# 🤖 IEEE AI RAG Chatbot\n"
+            "Ask questions about **IEEE Beni Suef Student Branch** — powered by RAG retrieval and Google Gemini."
+        )
 
-        with gr.Tab("Chat"):
-            gr.ChatInterface(
-                fn=chat_fn,
-                title="Ask IEEE knowledge questions",
-            )
+        with gr.Tab("💬 Chat"):
+            chatbot = gr.Chatbot(label="Chat History", type="messages")
+            msg_box = gr.Textbox(placeholder="Ask a question...", label="Your Message")
+            with gr.Row():
+                submit_btn = gr.Button("Send", variant="primary")
+                clear_btn = gr.Button("Clear History")
+                
+            with gr.Row():
+                upvote_btn = gr.Button("👍 Good Response")
+                downvote_btn = gr.Button("👎 Bad Response")
+            
+            feedback_status = gr.Markdown()
+            current_run_id = gr.State("")
 
-        with gr.Tab("Ingestion"):
-            uploader = gr.Files(
-                label="Upload PDF/PPT/DOC files",
-                file_count="multiple",
-                file_types=[".pdf", ".ppt", ".pptx", ".docx", ".doc"],
-            )
-            upload_output = gr.Textbox(label="Upload Status")
-            sync_output = gr.Textbox(label="Local Sync Status")
-            website_url = gr.Textbox(
-                label="Website URL",
-                value=settings.website_default_url,
-            )
-            website_max_pages = gr.Number(
-                label="Website max pages",
-                value=settings.website_max_pages,
-                precision=0,
-            )
-            website_output = gr.Textbox(label="Website Crawl Status")
-            upload_button = gr.Button("Upload + Index")
-            sync_button = gr.Button("Sync docs/pdf, docs/ppt, and docs/doc")
-            website_button = gr.Button("Crawl Website + Index")
-            upload_button.click(fn=upload_fn, inputs=[uploader], outputs=[upload_output])
-            sync_button.click(fn=sync_fn, inputs=None, outputs=[sync_output])
-            website_button.click(
-                fn=website_fn,
-                inputs=[website_url, website_max_pages],
-                outputs=[website_output],
-            )
+            def user(user_message, history):
+                return "", history + [{"role": "user", "content": user_message}]
 
-        with gr.Tab("Status"):
+            def bot(history):
+                user_message = history[-1]["content"]
+                history_text = _history_to_text(history[:-1])
+                
+                history.append({"role": "assistant", "content": ""})
+                
+                run_id = ""
+                sources = []
+                confidence = ""
+                for chunk, src, r_id, conf in agent.answer_stream(user_message, history_text=history_text):
+                    run_id = r_id
+                    sources = src
+                    confidence = conf
+                    history[-1]["content"] += chunk
+                    yield history, run_id
+
+                if sources and _user_requested_sources(user_message):
+                    source_text = "\n".join(f"- {source}" for source in sources[:8])
+                    history[-1]["content"] += f"\n\n**Sources:**\n{source_text}"
+                
+                if confidence:
+                    badge = "🟢 High" if confidence == "High" else "🟡 Medium" if confidence == "Medium" else "🔴 Low"
+                    if confidence == "Web Search":
+                        badge = "🌐 Web Search"
+                    elif confidence == "None":
+                        badge = "⚪ None"
+                    history[-1]["content"] += f"\n\n*(Retrieval Confidence: {badge})*"
+                    
+                yield history, run_id
+
+            msg_box.submit(user, [msg_box, chatbot], [msg_box, chatbot], queue=False).then(
+                bot, chatbot, [chatbot, current_run_id]
+            )
+            submit_btn.click(user, [msg_box, chatbot], [msg_box, chatbot], queue=False).then(
+                bot, chatbot, [chatbot, current_run_id]
+            )
+            clear_btn.click(lambda: [], None, chatbot, queue=False)
+
+            def handle_feedback(run_id, score):
+                if not run_id:
+                    return "No response to evaluate yet."
+                success = agent.submit_feedback(run_id, score=score)
+                if success:
+                    return "Feedback sent ✓ Thank you!"
+                return "Failed to send feedback. Please check LangSmith tracing is enabled."
+
+            upvote_btn.click(lambda r: handle_feedback(r, 1.0), inputs=[current_run_id], outputs=[feedback_status])
+            downvote_btn.click(lambda r: handle_feedback(r, 0.0), inputs=[current_run_id], outputs=[feedback_status])
+
+        with gr.Tab("📥 Ingestion"):
+            gr.Markdown("Upload documents or crawl a website to index content into the knowledge base.")
+
+            with gr.Group():
+                gr.Markdown("### 📄 Upload Files")
+                uploader = gr.Files(
+                    label="Upload PDF/PPT/DOC files",
+                    file_count="multiple",
+                    file_types=[".pdf", ".ppt", ".pptx", ".docx", ".doc"],
+                )
+                upload_button = gr.Button("Upload + Index", variant="primary")
+                upload_output = gr.Textbox(label="Upload Status", interactive=False)
+                upload_button.click(fn=upload_fn, inputs=[uploader], outputs=[upload_output])
+
+            with gr.Group():
+                gr.Markdown("### 📂 Local Sync")
+                sync_button = gr.Button("Sync docs/pdf, docs/ppt, and docs/doc", variant="secondary")
+                sync_output = gr.Textbox(label="Local Sync Status", interactive=False)
+                sync_button.click(fn=sync_fn, inputs=None, outputs=[sync_output])
+
+            with gr.Group():
+                gr.Markdown("### 🌐 Website Crawl")
+                website_url = gr.Textbox(
+                    label="Website URL",
+                    value=settings.website_default_url,
+                )
+                website_max_pages = gr.Number(
+                    label="Max pages to crawl",
+                    value=settings.website_max_pages,
+                    precision=0,
+                )
+                website_button = gr.Button("Crawl Website + Index", variant="secondary")
+                website_output = gr.Textbox(label="Website Crawl Status", interactive=False)
+                website_button.click(
+                    fn=website_fn,
+                    inputs=[website_url, website_max_pages],
+                    outputs=[website_output],
+                )
+
+        with gr.Tab("📊 Status"):
+            gr.Markdown("View current configuration, model status, and LangSmith tracing info.")
             status_output = gr.Markdown()
-            status_button = gr.Button("Refresh status")
+            status_button = gr.Button("Refresh status", variant="primary")
             status_button.click(fn=status_fn, inputs=None, outputs=[status_output])
+
+        with gr.Tab("📚 Knowledge Base"):
+            gr.Markdown("View statistics and sources currently indexed in the Vector Database.")
+            kb_output = gr.Markdown()
+            kb_button = gr.Button("Refresh KB Stats", variant="primary")
+            kb_button.click(fn=kb_stats_fn, inputs=None, outputs=[kb_output])
+
+        with gr.Tab("📈 Analytics"):
+            gr.Markdown("View LangSmith trace analytics, feedback, and recent runs.")
+            with gr.Row():
+                analytics_fb = gr.Markdown("Loading feedback...")
+                analytics_lat = gr.Markdown("Loading latency...")
+            analytics_runs = gr.Markdown("Loading runs...")
+            analytics_btn = gr.Button("Refresh Analytics", variant="primary")
+            analytics_btn.click(
+                fn=analytics_fn, 
+                inputs=None, 
+                outputs=[analytics_fb, analytics_lat, analytics_runs]
+            )
 
         api_message = gr.Textbox(visible=False)
         api_output = gr.Textbox(visible=False)

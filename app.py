@@ -1,5 +1,11 @@
+import logging
 from pathlib import Path
 import sys
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+)
 
 ROOT = Path(__file__).resolve().parent
 SRC = ROOT / "src"

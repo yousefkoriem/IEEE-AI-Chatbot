@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib
 import importlib
 import json
+import logging
 from pathlib import Path
 from collections import deque
 from typing import Any
@@ -17,6 +18,9 @@ from bs4 import BeautifulSoup
 
 from .config import Settings
 from .vectorstore import get_vector_store
+from langsmith import traceable
+
+logger = logging.getLogger(__name__)
 
 SUPPORTED_EXTENSIONS = {".pdf", ".ppt", ".pptx", ".docx", ".doc"}
 
@@ -179,7 +183,8 @@ def _crawl_same_domain(start_url: str, max_pages: int, timeout_seconds: int) -> 
     return pages
 
 
-def ingest_files(settings: Settings, file_paths: list[str], origin: str) -> dict[str, int]:
+@traceable(run_type="chain", name="ingest_files")
+def ingest_files(settings: Settings, file_paths: list[str], origin: str = "local") -> dict[str, int]:
     vector_store = get_vector_store(settings)
     splitter = RecursiveCharacterTextSplitter(
         chunk_size=settings.chunk_size,
@@ -282,6 +287,7 @@ def sync_local_docs(settings: Settings) -> dict[str, int]:
     return result
 
 
+@traceable(run_type="chain", name="ingest_website")
 def ingest_website(settings: Settings, start_url: str, max_pages: int = 25) -> dict[str, int]:
     pages = _crawl_same_domain(
         start_url=start_url,

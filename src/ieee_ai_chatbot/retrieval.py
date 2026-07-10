@@ -1,25 +1,13 @@
 from __future__ import annotations
 
+import logging
 from urllib.parse import parse_qs, unquote, urlparse
 
 import requests
 from bs4 import BeautifulSoup
 from langchain_core.documents import Document
 
-from .config import Settings
-from .vectorstore import get_vector_store
-
-
-def retrieve_context(settings: Settings, question: str) -> list[Document]:
-    vector_store = get_vector_store(settings)
-    retriever = vector_store.as_retriever(
-        search_type="mmr",
-        search_kwargs={
-            "k": settings.retriever_k,
-            "fetch_k": settings.retriever_fetch_k,
-        },
-    )
-    return retriever.invoke(question)
+logger = logging.getLogger(__name__)
 
 
 def search_web_snippets(question: str, max_results: int, timeout_seconds: int) -> list[Document]:

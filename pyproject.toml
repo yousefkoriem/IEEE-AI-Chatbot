@@ -5,21 +5,27 @@ description = "RAG chatbot for IEEE SB knowledge base"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
-    "gradio>=5.33.0",
-    "langchain>=1.2.10",
-    "langchain-community>=0.4.1",
-    "langchain-google-genai>=4.2.1",
-    "langchain-pinecone>=0.2.13",
-    "langchain-text-splitters>=1.0.0",
-    "pinecone-client>=6.0.0",
-    "requests>=2.32.5",
-    "python-dotenv>=1.1.1",
-    "beautifulsoup4>=4.13.5",
-    "python-docx>=1.2.0",
-    "pypdf>=6.7.3",
-    "python-pptx>=1.0.2",
-    "unstructured>=0.21.5",
+    "gradio==6.6.0",
+    "langchain==1.2.10",
+    "langchain-community==0.4.1",
+    "langchain-core==1.2.16",
+    "langchain-google-genai==4.2.1",
+    "langchain-pinecone==0.2.13",
+    "langchain-text-splitters==1.1.1",
+    "pinecone-client==6.0.0",
+    "requests==2.32.5",
+    "python-dotenv==1.2.1",
+    "beautifulsoup4==4.14.3",
+    "python-docx==1.2.0",
+    "pypdf==6.7.3",
+    "python-pptx==1.0.2",
+    "unstructured==0.21.5",
 ]
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[dependency-groups]
+dev = [
+    "pytest>=9.1.1",
+]

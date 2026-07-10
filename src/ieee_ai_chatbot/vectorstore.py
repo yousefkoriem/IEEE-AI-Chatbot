@@ -1,15 +1,20 @@
 from __future__ import annotations
 
-from typing import List
+import logging
 
+from langchain_core.embeddings import Embeddings
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from langchain_pinecone import PineconeVectorStore
 from pinecone import Pinecone, ServerlessSpec
 
 from .config import Settings
 
+logger = logging.getLogger(__name__)
 
-class ResilientGoogleEmbeddings:
+
+class ResilientGoogleEmbeddings(Embeddings):
+    """Embedding wrapper that falls back to an alternate model on NOT_FOUND errors."""
+
     def __init__(
         self,
         primary_model: str,
@@ -37,20 +42,22 @@ class ResilientGoogleEmbeddings:
         message = str(error).lower()
         return "not_found" in message or "not found" in message
 
-    def embed_query(self, text: str) -> List[float]:
+    def embed_query(self, text: str) -> list[float]:
         try:
             return self._primary.embed_query(text)
         except Exception as error:
             if not self._should_fallback(error):
                 raise
+            logger.warning("Primary embedding model failed, using fallback: %s", error)
             return self._fallback.embed_query(text)
 
-    def embed_documents(self, texts: List[str]) -> List[List[float]]:
+    def embed_documents(self, texts: list[str]) -> list[list[float]]:
         try:
             return self._primary.embed_documents(texts)
         except Exception as error:
             if not self._should_fallback(error):
                 raise
+            logger.warning("Primary embedding model failed, using fallback: %s", error)
             return self._fallback.embed_documents(texts)
 
 
@@ -93,7 +100,7 @@ def get_vector_store(settings: Settings) -> PineconeVectorStore:
     embeddings = ResilientGoogleEmbeddings(
         primary_model=settings.embedding_model,
         api_key=settings.google_api_key,
-        fallback_model="models/gemini-embedding-001",
+        fallback_model=settings.embedding_model_fallback,
         output_dimensionality=settings.pinecone_dimension,
     )
     return PineconeVectorStore(

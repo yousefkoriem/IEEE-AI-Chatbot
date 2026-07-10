@@ -1,9 +1,12 @@
 from __future__ import annotations
 
+import logging
 import os
 from dataclasses import dataclass
 
 from dotenv import load_dotenv
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass(slots=True)
@@ -17,8 +20,11 @@ class Settings:
     pinecone_metric: str
     pinecone_dimension: int
     chat_model: str
+    chat_model_fallback: str
+    chat_quota_retry_seconds: int
     max_output_tokens: int
     embedding_model: str
+    embedding_model_fallback: str
     retriever_k: int
     retriever_fetch_k: int
     internet_fallback_enabled: bool
@@ -36,10 +42,25 @@ class Settings:
     langsmith_api_key: str
     langsmith_project: str
     langsmith_tracing: bool
+    langsmith_endpoint: str
 
     @classmethod
     def from_env(cls) -> "Settings":
+        from pathlib import Path as _Path
+
+        from dotenv import find_dotenv
+
         load_dotenv()
+        dotenv_file = find_dotenv(usecwd=True)
+        # Resolve relative paths against the project root (directory containing .env or CWD)
+        project_root = _Path(dotenv_file).resolve().parent if dotenv_file else _Path.cwd()
+
+        def _resolve_path(value: str) -> str:
+            p = _Path(value)
+            if p.is_absolute():
+                return value
+            return str(project_root / p)
+
         return cls(
             google_api_key=os.getenv("GOOGLE_API_KEY", ""),
             pinecone_api_key=os.getenv("PINECONE_API_KEY", ""),
@@ -50,8 +71,11 @@ class Settings:
             pinecone_metric=os.getenv("PINECONE_METRIC", "cosine"),
             pinecone_dimension=int(os.getenv("PINECONE_DIMENSION", "1024")),
             chat_model=os.getenv("CHAT_MODEL", "gemini-2.5-flash-lite"),
+            chat_model_fallback=os.getenv("CHAT_MODEL_FALLBACK", "gemini-2.5-flash-lite"),
+            chat_quota_retry_seconds=int(os.getenv("CHAT_QUOTA_RETRY_SECONDS", "30")),
             max_output_tokens=int(os.getenv("MAX_OUTPUT_TOKENS", "400")),
             embedding_model=os.getenv("EMBEDDING_MODEL", "models/gemini-embedding-001"),
+            embedding_model_fallback=os.getenv("EMBEDDING_MODEL_FALLBACK", "models/gemini-embedding-001"),
             retriever_k=int(os.getenv("RETRIEVER_K", "3")),
             retriever_fetch_k=int(os.getenv("RETRIEVER_FETCH_K", "10")),
             internet_fallback_enabled=os.getenv("INTERNET_FALLBACK_ENABLED", "true").lower() == "true",
@@ -59,16 +83,17 @@ class Settings:
             web_search_timeout_seconds=int(os.getenv("WEB_SEARCH_TIMEOUT_SECONDS", "8")),
             chunk_size=int(os.getenv("CHUNK_SIZE", "1200")),
             chunk_overlap=int(os.getenv("CHUNK_OVERLAP", "150")),
-            docs_pdf_dir=os.getenv("DOCS_PDF_DIR", "docs/pdf"),
-            docs_ppt_dir=os.getenv("DOCS_PPT_DIR", "docs/ppt"),
-            docs_doc_dir=os.getenv("DOCS_DOC_DIR", "docs/doc"),
+            docs_pdf_dir=_resolve_path(os.getenv("DOCS_PDF_DIR", "docs/pdf")),
+            docs_ppt_dir=_resolve_path(os.getenv("DOCS_PPT_DIR", "docs/ppt")),
+            docs_doc_dir=_resolve_path(os.getenv("DOCS_DOC_DIR", "docs/doc")),
             website_default_url=os.getenv("WEBSITE_DEFAULT_URL", "https://ieee-mangment.vercel.app/"),
             website_max_pages=int(os.getenv("WEBSITE_MAX_PAGES", "25")),
             website_timeout_seconds=int(os.getenv("WEBSITE_TIMEOUT_SECONDS", "20")),
-            manifest_path=os.getenv("MANIFEST_PATH", ".rag_manifest.json"),
+            manifest_path=_resolve_path(os.getenv("MANIFEST_PATH", ".rag_manifest.json")),
             langsmith_api_key=os.getenv("LANGSMITH_API_KEY", ""),
             langsmith_project=os.getenv("LANGSMITH_PROJECT", "IEEE-AI-Chatbot"),
-            langsmith_tracing=os.getenv("LANGSMITH_TRACING", "false").lower() == "true",
+            langsmith_tracing=os.getenv("LANGSMITH_TRACING", "true").lower() == "true",
+            langsmith_endpoint=os.getenv("LANGSMITH_ENDPOINT", "https://api.smith.langchain.com"),
         )
 
     def validate_required(self) -> tuple[bool, list[str]]:
@@ -77,6 +102,8 @@ class Settings:
             missing.append("GOOGLE_API_KEY")
         if not self.pinecone_api_key:
             missing.append("PINECONE_API_KEY")
+        if not self.chat_model.strip():
+            missing.append("CHAT_MODEL")
         return (len(missing) == 0, missing)
 
 
@@ -86,6 +113,7 @@ def configure_langsmith(settings: Settings) -> None:
         if settings.langsmith_api_key:
             os.environ["LANGSMITH_API_KEY"] = settings.langsmith_api_key
         os.environ["LANGSMITH_PROJECT"] = settings.langsmith_project
+        os.environ["LANGSMITH_ENDPOINT"] = settings.langsmith_endpoint
 
 
 def langsmith_status(settings: Settings) -> dict[str, str]:
