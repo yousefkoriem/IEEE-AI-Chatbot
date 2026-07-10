@@ -230,10 +230,6 @@ def create_demo() -> gr.Blocks:
 
     with gr.Blocks(
         title="IEEE AI RAG Chatbot",
-        theme=gr.themes.Soft(
-            primary_hue=gr.themes.colors.blue,
-            secondary_hue=gr.themes.colors.indigo,
-        ),
     ) as demo:
         gr.Markdown(
             "# 🤖 IEEE AI RAG Chatbot\n"
@@ -241,7 +237,7 @@ def create_demo() -> gr.Blocks:
         )
 
         with gr.Tab("💬 Chat"):
-            chatbot = gr.Chatbot(label="Chat History", type="messages")
+            chatbot = gr.Chatbot(label="Chat History")
             msg_box = gr.Textbox(placeholder="Ask a question...", label="Your Message")
             with gr.Row():
                 submit_btn = gr.Button("Send", variant="primary")
