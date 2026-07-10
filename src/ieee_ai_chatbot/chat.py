@@ -317,7 +317,7 @@ class RAGAgent:
             return docs, confidence
 
         if not self.settings.internet_fallback_enabled:
-            return [], "None"
+            return [], ""
 
         try:
             docs = search_web_snippets(

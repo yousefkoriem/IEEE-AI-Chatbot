@@ -825,7 +825,7 @@ def create_demo() -> gr.Blocks:
             answer = f"{answer}\n\nSources:\n{source_text}"
 
         if suggestions:
-            answer += "\n\n**💡 Follow-up:**\n" + "\n".join(f"- {s}" for s in suggestions)
+            answer += "\n\nFollow-up:\n" + "\n".join(f"- {s}" for s in suggestions if isinstance(s, str) and s.strip())
 
         return answer
 
@@ -844,7 +844,7 @@ def create_demo() -> gr.Blocks:
             answer = f"{answer}\n\nSources:\n{source_text}"
 
         if suggestions:
-            answer += "\n\n**💡 Follow-up:**\n" + "\n".join(f"- {s}" for s in suggestions)
+            answer += "\n\nFollow-up:\n" + "\n".join(f"- {s}" for s in suggestions if isinstance(s, str) and s.strip())
 
         updated_history = [
             *history_items,
@@ -1275,16 +1275,18 @@ def create_demo() -> gr.Blocks:
                             if not history or len(history) < 1:
                                 return history, run_id, sources, confidence, suggestions
                             msg = history[-1]["content"]
-                            has_refs = "📚 **References**" in msg
+                            has_refs = "References" in msg
                             if not has_refs:
                                 if sources and _user_requested_sources(history[-2]["content"] if len(history) >= 2 else ""):
                                     source_text = "\n".join(f"- {source}" for source in sources[:8])
-                                    msg += f"\n\n**Sources:**\n{source_text}"
-                            if confidence:
+                                    msg += f"\n\nSources:\n{source_text}"
+                            if isinstance(confidence, str) and confidence:
                                 emoji = "🟢" if confidence == "High" else "🟡" if confidence == "Medium" else "🔴" if confidence == "Low" else "🌐"
-                                msg += f"\n\n{emoji} *Confidence: {confidence}*"
-                            if suggestions and not has_refs:
-                                msg += "\n\n💡 **Follow-up:**\n" + "\n".join(f"- {s}" for s in suggestions[:3])
+                                msg += f"\n{emoji} Confidence: {confidence}"
+                            if isinstance(suggestions, list) and suggestions and not has_refs:
+                                safe = [s for s in suggestions if isinstance(s, str) and s.strip()]
+                                if safe:
+                                    msg += "\n\nFollow-up:\n" + "\n".join(f"- {s}" for s in safe)
                             history[-1]["content"] = msg
                             return history, run_id, sources, confidence, suggestions
 
