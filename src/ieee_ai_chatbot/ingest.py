@@ -22,7 +22,7 @@ from langsmith import traceable
 
 logger = logging.getLogger(__name__)
 
-SUPPORTED_EXTENSIONS = {".pdf", ".ppt", ".pptx", ".docx", ".doc"}
+SUPPORTED_EXTENSIONS = {".pdf", ".ppt", ".pptx", ".docx", ".doc", ".md", ".html"}
 
 
 def _sha256_file(path: Path) -> str:
@@ -86,6 +86,16 @@ def _extract_doc_text(path: Path) -> str:
     return "\n".join(blocks).strip()
 
 
+def _extract_md_text(path: Path) -> str:
+    return path.read_text(encoding="utf-8").strip()
+
+
+def _extract_html_text(path: Path) -> str:
+    html = path.read_text(encoding="utf-8")
+    text, _ = _extract_page_text(html)
+    return text.strip()
+
+
 def _extract_text(path: Path) -> str:
     suffix = path.suffix.lower()
     if suffix == ".pdf":
@@ -96,6 +106,10 @@ def _extract_text(path: Path) -> str:
         return _extract_docx_text(path)
     if suffix == ".doc":
         return _extract_doc_text(path)
+    if suffix == ".md":
+        return _extract_md_text(path)
+    if suffix == ".html":
+        return _extract_html_text(path)
     raise ValueError(f"Unsupported file extension: {path.suffix}")
 
 
@@ -371,3 +385,57 @@ def ingest_website(settings: Settings, start_url: str, max_pages: int = 25) -> d
         "deleted": deleted,
         "total_pages": len(pages),
     }
+
+
+@traceable(run_type="chain", name="ingest_text")
+def ingest_text(settings: Settings, text: str, source_name: str, origin: str = "text") -> dict[str, int]:
+    vector_store = get_vector_store(settings)
+    splitter = RecursiveCharacterTextSplitter(
+        chunk_size=settings.chunk_size,
+        chunk_overlap=settings.chunk_overlap,
+    )
+
+    manifest_path = Path(settings.manifest_path)
+    manifest = _load_manifest(manifest_path)
+
+    # Use a hash of the text content as the version hash
+    hasher = hashlib.sha256()
+    hasher.update(text.encode("utf-8"))
+    content_hash = hasher.hexdigest()
+
+    existing = manifest["sources"].get(source_name, {})
+    if existing.get("hash") == content_hash:
+        logger.info("Text %s is unchanged. Skipping.", source_name)
+        return {"indexed": 0, "skipped": 1, "deleted": 0}
+
+    # Delete old chunks if updating
+    deleted_count = 0
+    if existing and "chunk_ids" in existing:
+        old_ids = existing["chunk_ids"]
+        if old_ids:
+            vector_store.delete(ids=old_ids)
+            deleted_count += len(old_ids)
+            logger.info("Deleted %d old chunks for text %s", len(old_ids), source_name)
+
+    doc = Document(
+        page_content=text,
+        metadata={
+            "source": source_name,
+            "filename": source_name,
+            "suffix": ".txt",
+        }
+    )
+    chunks = splitter.split_documents([doc])
+    if not chunks:
+        return {"indexed": 0, "skipped": 1, "deleted": deleted_count}
+
+    new_ids = vector_store.add_documents(chunks)
+    manifest["sources"][source_name] = {
+        "hash": content_hash,
+        "chunk_ids": new_ids,
+        "origin": origin,
+        "timestamp": __import__("time").time()
+    }
+    _save_manifest(manifest_path, manifest)
+    logger.info("Indexed %d chunks for text %s", len(new_ids), source_name)
+    return {"indexed": len(new_ids), "skipped": 0, "deleted": deleted_count}

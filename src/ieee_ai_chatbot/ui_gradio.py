@@ -10,7 +10,7 @@ import gradio as gr
 
 from .chat import RAGAgent
 from .config import Settings
-from .ingest import ingest_files, ingest_website, sync_local_docs
+from .ingest import ingest_files, ingest_website, sync_local_docs, ingest_text
 from .stats import get_kb_stats
 from .analytics import get_recent_runs, get_feedback_summary, get_latency_stats
 
@@ -228,6 +228,19 @@ def create_demo() -> gr.Blocks:
         except Exception as error:
             return f"Website crawl failed: {error}"
 
+    def text_ingest_fn(text: str, source_name: str) -> str:
+        if not text.strip():
+            return "Text cannot be empty."
+        target_source = source_name.strip() or "Raw Text Input"
+        try:
+            result = ingest_text(settings, text, target_source)
+            return (
+                f"Indexed chunks: {result['indexed']} | "
+                f"Skipped: {result['skipped']} | Deleted old chunks: {result['deleted']}"
+            )
+        except Exception as error:
+            return f"Text ingestion failed: {error}"
+
     with gr.Blocks(
         title="IEEE AI RAG Chatbot",
     ) as demo:
@@ -308,9 +321,9 @@ def create_demo() -> gr.Blocks:
             with gr.Group():
                 gr.Markdown("### 📄 Upload Files")
                 uploader = gr.Files(
-                    label="Upload PDF/PPT/DOC files",
+                    label="Upload PDF/PPT/DOC/MD/HTML files",
                     file_count="multiple",
-                    file_types=[".pdf", ".ppt", ".pptx", ".docx", ".doc"],
+                    file_types=[".pdf", ".ppt", ".pptx", ".docx", ".doc", ".md", ".html"],
                 )
                 upload_button = gr.Button("Upload + Index", variant="primary")
                 upload_output = gr.Textbox(label="Upload Status", interactive=False)
@@ -339,6 +352,25 @@ def create_demo() -> gr.Blocks:
                     fn=website_fn,
                     inputs=[website_url, website_max_pages],
                     outputs=[website_output],
+                )
+
+            with gr.Group():
+                gr.Markdown("### 📝 Raw Text")
+                text_input = gr.Textbox(
+                    label="Text Content",
+                    lines=5,
+                    placeholder="Paste text here to index into the knowledge base...",
+                )
+                text_source = gr.Textbox(
+                    label="Source Name (Optional)",
+                    placeholder="e.g., meeting_notes_2026.txt",
+                )
+                text_button = gr.Button("Ingest Text", variant="secondary")
+                text_output = gr.Textbox(label="Text Ingestion Status", interactive=False)
+                text_button.click(
+                    fn=text_ingest_fn,
+                    inputs=[text_input, text_source],
+                    outputs=[text_output],
                 )
 
         with gr.Tab("📊 Status"):
