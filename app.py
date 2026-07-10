@@ -1,6 +1,7 @@
+import asyncio
 import logging
-from pathlib import Path
 import sys
+from pathlib import Path
 
 logging.basicConfig(
     level=logging.INFO,
@@ -13,6 +14,19 @@ if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
 from ieee_ai_chatbot.ui_gradio import create_demo, CSS, THEME
+
+
+# Silence Python 3.11 asyncio shutdown noise (harmless ValueError from Gradio)
+if sys.version_info < (3, 12):
+    _orig_close = asyncio.selector_events.BaseSelectorEventLoop.close
+
+    def _patched_close(self):
+        try:
+            _orig_close(self)
+        except ValueError:
+            pass
+
+    asyncio.selector_events.BaseSelectorEventLoop.close = _patched_close
 
 
 def main() -> None:
