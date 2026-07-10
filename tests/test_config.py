@@ -24,6 +24,7 @@ def _make_settings(**overrides):
         chat_model_fallback="gemini-2.5-flash-lite",
         chat_quota_retry_seconds=30,
         max_output_tokens=400,
+        temperature=0.2,
         embedding_model="models/gemini-embedding-001",
         embedding_model_fallback="models/gemini-embedding-001",
         retriever_k=3,
@@ -31,6 +32,9 @@ def _make_settings(**overrides):
         internet_fallback_enabled=True,
         web_search_results=3,
         web_search_timeout_seconds=8,
+        web_search_provider="duckduckgo",
+        web_search_tavily_key="",
+        web_search_serpapi_key="",
         chunk_size=1200,
         chunk_overlap=150,
         docs_pdf_dir="docs/pdf",
@@ -44,6 +48,13 @@ def _make_settings(**overrides):
         langsmith_project="Test",
         langsmith_tracing=False,
         langsmith_endpoint="https://api.smith.langchain.com",
+        chat_history_db_path=":memory:",
+        rate_limit_max_requests=30,
+        rate_limit_window_seconds=60,
+        feedback_boost_enabled=True,
+        feedback_boost_factor=0.3,
+        vector_store_type="pinecone",
+        vector_store_chroma_dir=".vector_db",
     )
     defaults.update(overrides)
     return Settings(**defaults)

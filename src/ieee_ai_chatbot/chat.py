@@ -3,6 +3,7 @@ from __future__ import annotations
 import logging
 import re
 import time
+from difflib import SequenceMatcher
 
 from langchain_core.messages import HumanMessage, SystemMessage
 from langchain_google_genai import ChatGoogleGenerativeAI
@@ -18,7 +19,7 @@ logger = logging.getLogger(__name__)
 
 
 class RAGAgent:
-    def __init__(self, settings: Settings) -> None:
+    def __init__(self, settings: Settings, get_chunk_boosts=None) -> None:
         self.settings = settings
         self._prompt_config = build_prompt_config(settings)
         self._system_prompt = build_system_prompt(settings)
@@ -28,14 +29,22 @@ class RAGAgent:
         self._vectorstore = get_vector_store(settings)
         self._llm = self._build_llm(settings.chat_model)
         self._fallback_llm: ChatGoogleGenerativeAI | None = None
+        self._get_chunk_boosts = get_chunk_boosts or (lambda: {})
 
-    def _build_llm(self, model_name: str) -> ChatGoogleGenerativeAI:
+    def _build_llm(self, model_name: str, temperature: float | None = None, max_tokens: int | None = None) -> ChatGoogleGenerativeAI:
         return ChatGoogleGenerativeAI(
             model=model_name,
             google_api_key=self.settings.google_api_key,
-            temperature=0.2,
-            max_output_tokens=self.settings.max_output_tokens,
+            temperature=temperature if temperature is not None else self.settings.temperature,
+            max_output_tokens=max_tokens if max_tokens is not None else self.settings.max_output_tokens,
         )
+
+    def set_temperature(self, value: float) -> None:
+        self._llm = self._build_llm(self.settings.chat_model, temperature=value, max_tokens=self.settings.max_output_tokens)
+
+    def set_max_tokens(self, value: int) -> None:
+        self.settings.max_output_tokens = value
+        self._llm = self._build_llm(self.settings.chat_model, max_tokens=value)
 
     @staticmethod
     def _is_quota_error(error: Exception) -> bool:
@@ -104,11 +113,32 @@ class RAGAgent:
                 "or increase quota. Consider setting CHAT_MODEL=gemini-2.5-flash-lite."
             ) from first_error
 
+    def _annotate_citations(self, answer_text: str, docs: list) -> tuple[str, list[dict]]:
+        """Append numbered source references after the answer.
+        Returns (answer_with_footnotes, list of unique source dicts)."""
+        source_map: list[dict] = []
+        for doc in docs:
+            source_id = doc.metadata.get("id", str(id(doc)))[:12]
+            filename = doc.metadata.get("filename", "unknown")
+            existing = {s["id"] for s in source_map}
+            if source_id not in existing:
+                source_map.append({"id": source_id, "filename": filename})
+
+        if not source_map:
+            return answer_text, source_map
+
+        refs = "\n\n📚 **References**\n"
+        for i, s in enumerate(source_map, 1):
+            refs += f"\n[{i}] `{s['id']}` — {s['filename']}"
+
+        return answer_text + refs, source_map
+
     @traceable(run_type="chain", name="rag_answer")
-    def answer(self, question: str, history_text: str = "") -> tuple[str, list[str], str, str]:
+    def answer(self, question: str, history_text: str = "", generate_suggestions: bool = False) -> tuple[str, list[str], str, str, list[str], list[str]]:
         docs, confidence = self._retrieve_docs(question)
         context_chunks = [doc.page_content for doc in docs]
         sources = [str(doc.metadata.get("filename", "unknown")) for doc in docs]
+        chunk_ids_used = [str(doc.metadata.get("chunk_id", "")) for doc in docs if doc.metadata.get("chunk_id")]
         context = "\n\n".join(context_chunks)
         prompt = build_user_prompt(
             question=question,
@@ -117,11 +147,38 @@ class RAGAgent:
             prompt_config=self._prompt_config,
         )
         answer_text = self._invoke_with_retry_and_fallback(prompt)
+
+        html_answer, _ = self._annotate_citations(answer_text, docs)
         
         run_tree = get_current_run_tree()
         run_id = str(run_tree.id) if run_tree else ""
+
+        suggestions = []
+        if generate_suggestions and answer_text.strip():
+            suggestions = self._generate_followup_suggestions(question, answer_text, context)
         
-        return answer_text, list(dict.fromkeys(sources)), run_id, confidence
+        return html_answer, list(dict.fromkeys(sources)), run_id, confidence, suggestions, chunk_ids_used
+
+    def _generate_followup_suggestions(self, question: str, answer: str, context: str) -> list[str]:
+        try:
+            suggestion_prompt = (
+                f"Based on this Q&A, suggest exactly 2 short follow-up questions "
+                f"the user might ask next. Return only the questions, one per line, "
+                f"without numbering or bullets.\n\n"
+                f"User: {question}\n"
+                f"Assistant: {answer}\n\n"
+                f"Context: {context[:800]}"
+            )
+            messages = [
+                SystemMessage(content="You are a helpful assistant that suggests follow-up questions. Keep each suggestion under 60 characters."),
+                HumanMessage(content=suggestion_prompt),
+            ]
+            response = self._llm.invoke(messages)
+            suggestions = [s.strip() for s in str(response.content).strip().split("\n") if s.strip()]
+            return suggestions[:3]
+        except Exception as e:
+            logger.warning("Failed to generate follow-up suggestions: %s", e)
+            return []
 
     @traceable(run_type="chain", name="rag_answer_stream")
     def answer_stream(self, question: str, history_text: str = ""):
@@ -129,6 +186,7 @@ class RAGAgent:
         context_chunks = [doc.page_content for doc in docs]
         sources = [str(doc.metadata.get("filename", "unknown")) for doc in docs]
         sources = list(dict.fromkeys(sources))
+        chunk_ids_used = [str(doc.metadata.get("chunk_id", "")) for doc in docs if doc.metadata.get("chunk_id")]
         context = "\n\n".join(context_chunks)
         prompt = build_user_prompt(
             question=question,
@@ -145,13 +203,63 @@ class RAGAgent:
         run_tree = get_current_run_tree()
         run_id = str(run_tree.id) if run_tree else ""
 
+        full_text = ""
         try:
             for chunk in self._llm.stream(messages):
-                yield str(chunk.content), sources, run_id, confidence
+                full_text += str(chunk.content)
+                yield str(chunk.content), sources, run_id, confidence, [], None, chunk_ids_used
         except Exception as error:
             logger.warning("Streaming failed, falling back to synchronous invoke: %s", error)
             answer_text = self._invoke_with_retry_and_fallback(prompt)
-            yield answer_text, sources, run_id, confidence
+            full_text = answer_text
+            yield answer_text, sources, run_id, confidence, [], None, chunk_ids_used
+
+        suggestions = self._generate_followup_suggestions(question, full_text, context)
+        html_answer, _ = self._annotate_citations(full_text, docs)
+        if suggestions:
+            yield "", sources, run_id, confidence, suggestions, html_answer, chunk_ids_used
+        else:
+            yield "", sources, run_id, confidence, [], html_answer, chunk_ids_used
+
+    async def answer_stream_async(self, question: str, history_text: str = ""):
+        docs, confidence = self._retrieve_docs(question)
+        context_chunks = [doc.page_content for doc in docs]
+        sources = [str(doc.metadata.get("filename", "unknown")) for doc in docs]
+        sources = list(dict.fromkeys(sources))
+        chunk_ids_used = [str(doc.metadata.get("chunk_id", "")) for doc in docs if doc.metadata.get("chunk_id")]
+        context = "\n\n".join(context_chunks)
+        prompt = build_user_prompt(
+            question=question,
+            history_text=history_text,
+            context=context,
+            prompt_config=self._prompt_config,
+        )
+        
+        messages = [
+            SystemMessage(content=self._system_prompt),
+            HumanMessage(content=prompt),
+        ]
+        
+        run_tree = get_current_run_tree()
+        run_id = str(run_tree.id) if run_tree else ""
+
+        full_text = ""
+        try:
+            async for chunk in self._llm.astream(messages):
+                full_text += str(chunk.content)
+                yield str(chunk.content), sources, run_id, confidence, [], None, chunk_ids_used
+        except Exception as error:
+            logger.warning("Async streaming failed, falling back to sync: %s", error)
+            for val in self.answer_stream(question, history_text=history_text):
+                yield val
+            return
+
+        suggestions = self._generate_followup_suggestions(question, full_text, context)
+        html_answer, _ = self._annotate_citations(full_text, docs)
+        if suggestions:
+            yield "", sources, run_id, confidence, suggestions, html_answer, chunk_ids_used
+        else:
+            yield "", sources, run_id, confidence, [], html_answer, chunk_ids_used
 
     def submit_feedback(self, run_id: str, score: float, comment: str = "") -> bool:
         if not self.ls_client or not run_id:
@@ -173,7 +281,6 @@ class RAGAgent:
         docs = []
         confidence = "Low"
         try:
-            # Using similarity_search_with_score instead of mmr to get confidence
             results = self._vectorstore.similarity_search_with_score(
                 question, 
                 k=self.settings.retriever_k
@@ -182,11 +289,26 @@ class RAGAgent:
                 docs = [doc for doc, score in results]
                 scores = [score for doc, score in results]
                 avg_score = sum(scores) / len(scores)
-                # Cosine similarity scores: closer to 1 is better
                 if avg_score > 0.85:
                     confidence = "High"
                 elif avg_score > 0.70:
                     confidence = "Medium"
+
+                if self.settings.feedback_boost_enabled:
+                    boosts = self._get_chunk_boosts()
+                    if boosts:
+                        factor = self.settings.feedback_boost_factor
+                        boosted_docs: list[Any] = []
+                        for doc, score in results:
+                            chunk_id = doc.metadata.get("chunk_id", "")
+                            boost = boosts.get(chunk_id, 0.0)
+                            if boost > 0:
+                                pass  # re-rank by adjusted score
+                            boosted_docs.append((doc, score * (1 + factor * max(boost, 0))))
+                        boosted_docs.sort(key=lambda x: x[1], reverse=True)
+                        docs = [doc for doc, _ in boosted_docs]
+                        scores = [score for _, score in boosted_docs]
+                        avg_score = sum(scores) / len(scores)
         except Exception:
             logger.exception("Retriever failed for question: %.100s", question)
             docs = []
@@ -202,6 +324,7 @@ class RAGAgent:
                 question=question,
                 max_results=self.settings.web_search_results,
                 timeout_seconds=self.settings.web_search_timeout_seconds,
+                settings=self.settings,
             )
             return docs, "Web Search"
         except Exception:

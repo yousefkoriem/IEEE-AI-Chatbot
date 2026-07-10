@@ -387,6 +387,42 @@ def ingest_website(settings: Settings, start_url: str, max_pages: int = 25) -> d
     }
 
 
+@traceable(run_type="chain", name="ingest_url_list")
+def ingest_url_list(settings: Settings, urls: list[str], progress_fn=None) -> dict[str, int]:
+    """Ingest a list of URLs as individual text sources."""
+    import requests
+    from bs4 import BeautifulSoup
+
+    total = {"indexed": 0, "skipped": 0, "deleted": 0, "total": len(urls), "errors": 0}
+    for i, url in enumerate(urls):
+        url = url.strip()
+        if not url:
+            total["errors"] += 1
+            continue
+        try:
+            if not url.startswith("http://") and not url.startswith("https://"):
+                url = "https://" + url
+            if progress_fn:
+                progress_fn((i + 1) / len(urls), desc=f"Fetching {url[:50]}...")
+            resp = requests.get(url, timeout=settings.website_timeout_seconds, headers={"User-Agent": "Mozilla/5.0"})
+            resp.raise_for_status()
+            soup = BeautifulSoup(resp.text, "html.parser")
+            for tag in soup(["script", "style", "nav", "footer", "header"]):
+                tag.decompose()
+            text = soup.get_text(separator="\n", strip=True)
+            if len(text) < 50:
+                total["errors"] += 1
+                continue
+            result = ingest_text(settings, text, source_name=url, origin="url_list")
+            total["indexed"] += result.get("indexed", 0)
+            total["skipped"] += result.get("skipped", 0)
+            total["deleted"] += result.get("deleted", 0)
+        except Exception as e:
+            logger.warning("Failed to ingest URL %s: %s", url, e)
+            total["errors"] += 1
+    return total
+
+
 @traceable(run_type="chain", name="ingest_text")
 def ingest_text(settings: Settings, text: str, source_name: str, origin: str = "text") -> dict[str, int]:
     vector_store = get_vector_store(settings)

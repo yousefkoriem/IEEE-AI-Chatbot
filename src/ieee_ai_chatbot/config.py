@@ -23,6 +23,7 @@ class Settings:
     chat_model_fallback: str
     chat_quota_retry_seconds: int
     max_output_tokens: int
+    temperature: float
     embedding_model: str
     embedding_model_fallback: str
     retriever_k: int
@@ -30,6 +31,9 @@ class Settings:
     internet_fallback_enabled: bool
     web_search_results: int
     web_search_timeout_seconds: int
+    web_search_provider: str
+    web_search_tavily_key: str
+    web_search_serpapi_key: str
     chunk_size: int
     chunk_overlap: int
     docs_pdf_dir: str
@@ -43,6 +47,13 @@ class Settings:
     langsmith_project: str
     langsmith_tracing: bool
     langsmith_endpoint: str
+    chat_history_db_path: str
+    rate_limit_max_requests: int
+    rate_limit_window_seconds: int
+    feedback_boost_enabled: bool
+    feedback_boost_factor: float
+    vector_store_type: str
+    vector_store_chroma_dir: str
 
     @classmethod
     def from_env(cls) -> "Settings":
@@ -74,6 +85,7 @@ class Settings:
             chat_model_fallback=os.getenv("CHAT_MODEL_FALLBACK", "gemini-2.5-flash-lite"),
             chat_quota_retry_seconds=int(os.getenv("CHAT_QUOTA_RETRY_SECONDS", "30")),
             max_output_tokens=int(os.getenv("MAX_OUTPUT_TOKENS", "400")),
+            temperature=float(os.getenv("TEMPERATURE", "0.2")),
             embedding_model=os.getenv("EMBEDDING_MODEL", "models/gemini-embedding-001"),
             embedding_model_fallback=os.getenv("EMBEDDING_MODEL_FALLBACK", "models/gemini-embedding-001"),
             retriever_k=int(os.getenv("RETRIEVER_K", "3")),
@@ -81,6 +93,9 @@ class Settings:
             internet_fallback_enabled=os.getenv("INTERNET_FALLBACK_ENABLED", "true").lower() == "true",
             web_search_results=int(os.getenv("WEB_SEARCH_RESULTS", "3")),
             web_search_timeout_seconds=int(os.getenv("WEB_SEARCH_TIMEOUT_SECONDS", "8")),
+            web_search_provider=os.getenv("WEB_SEARCH_PROVIDER", "duckduckgo"),
+            web_search_tavily_key=os.getenv("WEB_SEARCH_TAVILY_KEY", ""),
+            web_search_serpapi_key=os.getenv("WEB_SEARCH_SERPAPI_KEY", ""),
             chunk_size=int(os.getenv("CHUNK_SIZE", "1200")),
             chunk_overlap=int(os.getenv("CHUNK_OVERLAP", "150")),
             docs_pdf_dir=_resolve_path(os.getenv("DOCS_PDF_DIR", "docs/pdf")),
@@ -94,6 +109,13 @@ class Settings:
             langsmith_project=os.getenv("LANGSMITH_PROJECT", "IEEE-AI-Chatbot"),
             langsmith_tracing=os.getenv("LANGSMITH_TRACING", "true").lower() == "true",
             langsmith_endpoint=os.getenv("LANGSMITH_ENDPOINT", "https://api.smith.langchain.com"),
+            chat_history_db_path=_resolve_path(os.getenv("CHAT_HISTORY_DB_PATH", "chat_history.db")),
+            rate_limit_max_requests=int(os.getenv("RATE_LIMIT_MAX_REQUESTS", "30")),
+            rate_limit_window_seconds=int(os.getenv("RATE_LIMIT_WINDOW_SECONDS", "60")),
+            feedback_boost_enabled=os.getenv("FEEDBACK_BOOST_ENABLED", "true").lower() == "true",
+            feedback_boost_factor=float(os.getenv("FEEDBACK_BOOST_FACTOR", "0.3")),
+            vector_store_type=os.getenv("VECTOR_STORE_TYPE", "pinecone"),
+            vector_store_chroma_dir=_resolve_path(os.getenv("VECTOR_STORE_CHROMA_DIR", ".vector_db")),
         )
 
     def validate_required(self) -> tuple[bool, list[str]]:
