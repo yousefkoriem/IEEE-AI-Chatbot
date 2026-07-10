@@ -374,7 +374,6 @@ def create_demo() -> gr.Blocks:
             inputs=[api_message],
             outputs=[api_output],
             api_name="chat_once",
-            show_api=True,
             queue=False,
         )
 
@@ -388,7 +387,6 @@ def create_demo() -> gr.Blocks:
             inputs=[api_turn_message, api_turn_history],
             outputs=[api_turn_reply, api_turn_history_out],
             api_name="chat_turn",
-            show_api=True,
             queue=False,
         )
 
