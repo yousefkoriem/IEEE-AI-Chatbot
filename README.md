@@ -4,10 +4,10 @@ emoji: 🤖
 colorFrom: blue
 colorTo: indigo
 sdk: gradio
-sdk_version: "6.6.0"
+sdk_version: 6.6.0
+python_version: 3.11
 app_file: app.py
 pinned: false
-python_version: "3.11"
 ---
 
 # IEEE-AI-Chatbot
