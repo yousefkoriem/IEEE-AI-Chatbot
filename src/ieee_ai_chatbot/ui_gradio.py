@@ -837,7 +837,7 @@ def create_demo() -> gr.Blocks:
             parsed_history = []
 
         history_items = _normalize_history(parsed_history)
-        answer, sources, _, _, suggestions = chat_fn(message, history=history_items)
+        answer, sources, _, _, suggestions, _ = chat_fn(message, history=history_items)
 
         if sources and _user_requested_sources(message):
             source_text = "\n".join(f"- {source}" for source in sources[:8])
@@ -1067,6 +1067,8 @@ def create_demo() -> gr.Blocks:
 
     with gr.Blocks(
         title="IEEE AI Chatbot",
+        css=CSS,
+        theme=THEME,
     ) as demo:
 
         # ── STATE ──────────────────────────────────────────────────────

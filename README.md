@@ -5,7 +5,7 @@ colorFrom: blue
 colorTo: indigo
 sdk: gradio
 sdk_version: 6.20.0
-python_version: 3.11
+python_version: "3.11"
 app_file: app.py
 pinned: false
 ---
@@ -18,40 +18,79 @@ RAG chatbot for answering questions about IEEE Beni Suef Student Branch using:
 - Google GenAI `gemini-2.5-flash` for chat generation
 - Pinecone as vector database (dynamic upsert/update/delete)
 - LangSmith for tracing/status
-- Gradio UI for hosting locally and on Hugging Face Spaces
+- Gradio UI + FastAPI REST API (same port, no extra infra needed)
 
 ## Project structure
 
 ```text
-app.py
+app.py               ← Gradio UI + REST API (HF Spaces entry point)
+app_api.py           ← Standalone FastAPI server (separate port, dev/CI)
 src/ieee_ai_chatbot/
-	config.py
-	vectorstore.py
-	ingest.py
-	retrieval.py
-	prompts.py
-	chat.py
-	ui_gradio.py
+    api.py           ← REST router (mountable on Gradio or standalone)
+    chat.py
+    config.py
+    vectorstore.py
+    ingest.py
+    retrieval.py
+    prompts.py
+    ui_gradio.py
+    chat_history.py
+    rate_limiter.py
 tests/
-	test_config.py
-	test_prompts.py
-	test_ingest.py
 docs/
-	architecture.md
-	deployment_hf_spaces.md
-docs/pdf/
-docs/ppt/
+```
+
+## REST API
+
+The REST API is served on the **same port as the Gradio UI** (7860 on HF Spaces).  
+Interactive docs: `https://your-space.hf.space/api/v1/docs`
+
+### Endpoints
+
+| Method   | Path                              | Description                               |
+|----------|-----------------------------------|-------------------------------------------|
+| `GET`    | `/api/v1/health`                  | Liveness probe                            |
+| `GET`    | `/api/v1/status`                  | Model + KB status                         |
+| `POST`   | `/api/v1/chat`                    | Stateless Q&A — you manage history        |
+| `POST`   | `/api/v1/chat/session`            | Stateful Q&A — server stores memory       |
+| `GET`    | `/api/v1/chat/history/{key}`      | Fetch conversation history                |
+| `DELETE` | `/api/v1/chat/history/{key}`      | Clear a session                           |
+
+### Quick example (JavaScript)
+
+```js
+// Stateful — server remembers the conversation
+const res = await fetch("https://your-space.hf.space/api/v1/chat/session", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({
+    message: "What is the IEEE CS chapter about?",
+    session_key: "user-abc-123",        // any unique string
+    generate_suggestions: true
+  })
+});
+const { answer, sources, confidence, suggestions } = await res.json();
+```
+
+```js
+// Stateless — pass your own history array
+const res = await fetch("https://your-space.hf.space/api/v1/chat", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({
+    message: "Who is the chair?",
+    history: [
+      { role: "user",      content: "Tell me about IEEE." },
+      { role: "assistant", content: "IEEE is a global organization..." }
+    ]
+  })
+});
+const { answer } = await res.json();
 ```
 
 ## Local setup
 
 1. Install dependencies:
-
-```bash
-uv sync
-```
-
-or
 
 ```bash
 pip install -r requirements.txt
@@ -61,52 +100,39 @@ pip install -r requirements.txt
 
 ```bash
 cp .env.example .env
+# Fill in GOOGLE_API_KEY, PINECONE_API_KEY at minimum
 ```
 
-Fill in at least:
-
-- `GOOGLE_API_KEY`
-- `PINECONE_API_KEY`
-
-3. Run app:
+3. Run (Gradio UI + REST API on port 7860):
 
 ```bash
 python app.py
 ```
 
-## How ingestion works
+Or run only the standalone REST API on port 8000:
 
-- **Upload + Index** tab: upload PDF/PPT/PPTX/DOCX/DOC files directly in Gradio and index immediately.
-- **Local Sync** button: scans `docs/pdf`, `docs/ppt`, and `docs/doc`, then:
-	- indexes new/updated files,
-	- skips unchanged files,
-	- deletes vectors for removed local files.
-- **Crawl Website + Index** button: crawls same-domain pages from a start URL (default: `https://ieee-mangment.vercel.app/`) and indexes page content incrementally.
-
-The incremental state is tracked in `.rag_manifest.json`.
-
-By default, chat answers do not include sources unless you explicitly ask for sources/citations in your prompt.
-
-If Pinecone has no relevant context for a question, the chatbot can fall back to quick web search snippets (configurable via env vars).
-
-For faster responses, defaults are tuned to smaller retrieval depth (`RETRIEVER_K=3`, `RETRIEVER_FETCH_K=10`) and capped generation length (`MAX_OUTPUT_TOKENS=400`).
-
-## LangSmith
-
-Set:
-
-- `LANGSMITH_TRACING=true`
-- `LANGSMITH_API_KEY=...`
-- `LANGSMITH_PROJECT=IEEE-AI-Chatbot`
-
-Then use the **Status** tab in Gradio to verify tracing configuration.
+```bash
+uvicorn app_api:api_app --host 0.0.0.0 --port 8000 --reload
+```
 
 ## Hugging Face Spaces
 
-See `docs/deployment_hf_spaces.md` for full steps.
+Set the following secrets in your Space settings:
 
-Quick deploy command after `hf auth login`:
+| Secret | Required |
+|--------|----------|
+| `GOOGLE_API_KEY` | ✅ |
+| `PINECONE_API_KEY` | ✅ |
+| `PINECONE_INDEX_NAME` | ✅ |
+| `LANGSMITH_API_KEY` | optional |
+
+Deploy command (after `hf auth login`):
 
 ```bash
 ./scripts/deploy_hf_space.sh <your-username/your-space-name> main
 ```
+
+## LangSmith tracing
+
+Set `LANGSMITH_TRACING=true` and `LANGSMITH_API_KEY=...` to enable run tracking.
+Check the **Status** panel in the Gradio sidebar to verify.
