@@ -290,9 +290,11 @@ class RAGAgent:
                 docs = [doc for doc, score in results]
                 scores = [score for doc, score in results]
                 avg_score = sum(scores) / len(scores)
-                if avg_score > 0.85:
+                # Pinecone cosine similarity: 1.0 = exact match, 0.0 = unrelated.
+                # Typical relevant content scores 0.60–0.85 for domain-specific RAG.
+                if avg_score > 0.75:
                     confidence = "High"
-                elif avg_score > 0.70:
+                elif avg_score > 0.60:
                     confidence = "Medium"
 
                 if self.settings.feedback_boost_enabled:

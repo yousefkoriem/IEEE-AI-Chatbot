@@ -88,7 +88,7 @@ class Settings:
             temperature=float(os.getenv("TEMPERATURE", "0.2")),
             embedding_model=os.getenv("EMBEDDING_MODEL", "models/gemini-embedding-001"),
             embedding_model_fallback=os.getenv("EMBEDDING_MODEL_FALLBACK", "models/gemini-embedding-001"),
-            retriever_k=int(os.getenv("RETRIEVER_K", "3")),
+            retriever_k=int(os.getenv("RETRIEVER_K", "5")),
             retriever_fetch_k=int(os.getenv("RETRIEVER_FETCH_K", "10")),
             internet_fallback_enabled=os.getenv("INTERNET_FALLBACK_ENABLED", "true").lower() == "true",
             web_search_results=int(os.getenv("WEB_SEARCH_RESULTS", "3")),
