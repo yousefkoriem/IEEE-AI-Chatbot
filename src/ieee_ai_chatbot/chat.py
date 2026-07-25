@@ -281,6 +281,53 @@ class RAGAgent:
 
     @traceable(run_type="retriever", name="retrieve_docs")
     def _retrieve_docs(self, question: str) -> tuple[list[Any], str]:
+        # Pinecone is the primary knowledge base. A local keyword match must not
+        # prevent a more relevant semantic match from being used.
+        try:
+            pinecone_results = self._vectorstore.similarity_search_with_score(
+                question,
+                k=max(self.settings.retriever_k, self.settings.retriever_fetch_k),
+            )
+            unique_results: list[tuple[Any, float]] = []
+            seen_content: set[str] = set()
+            for doc, score in pinecone_results:
+                # Identical chunks can have distinct IDs when a source is ingested
+                # more than once, so normalize the actual content for deduplication.
+                content_key = re.sub(r"\s+", " ", doc.page_content).strip().casefold()
+                if not content_key or content_key in seen_content:
+                    continue
+                seen_content.add(content_key)
+                unique_results.append((doc, score))
+                if len(unique_results) >= self.settings.retriever_k:
+                    break
+
+            if unique_results:
+                if self.settings.feedback_boost_enabled:
+                    boosts = self._get_chunk_boosts()
+                    if boosts:
+                        factor = self.settings.feedback_boost_factor
+                        unique_results = [
+                            (
+                                doc,
+                                score * (1 + factor * max(boosts.get(doc.metadata.get("chunk_id", ""), 0.0), 0)),
+                            )
+                            for doc, score in unique_results
+                        ]
+                        unique_results.sort(key=lambda item: item[1], reverse=True)
+
+                docs = [doc for doc, _ in unique_results]
+                best_score = max(score for _, score in unique_results)
+                # Cosine similarities for the current embedding model commonly fall
+                # in the 0.60--0.74 range for correct answers. Use the strongest
+                # selected match, rather than averaging unrelated supporting chunks.
+                if best_score >= 0.65:
+                    return docs, "High"
+                if best_score >= 0.55:
+                    return docs, "Medium"
+                return docs, "Low"
+        except Exception:
+            logger.exception("Pinecone retriever failed for question: %.100s", question)
+
         if self.settings.local_retrieval_enabled:
             try:
                 local_docs = self._local_retriever.search(
