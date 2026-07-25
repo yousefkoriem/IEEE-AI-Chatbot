@@ -54,6 +54,9 @@ class Settings:
     feedback_boost_factor: float
     vector_store_type: str
     vector_store_chroma_dir: str
+    local_retrieval_enabled: bool
+    local_retrieval_max_results: int
+    local_retrieval_min_score: float
 
     @classmethod
     def from_env(cls) -> "Settings":
@@ -93,7 +96,7 @@ class Settings:
             internet_fallback_enabled=os.getenv("INTERNET_FALLBACK_ENABLED", "true").lower() == "true",
             web_search_results=int(os.getenv("WEB_SEARCH_RESULTS", "3")),
             web_search_timeout_seconds=int(os.getenv("WEB_SEARCH_TIMEOUT_SECONDS", "8")),
-            web_search_provider=os.getenv("WEB_SEARCH_PROVIDER", "duckduckgo"),
+            web_search_provider=os.getenv("WEB_SEARCH_PROVIDER", "google"),
             web_search_tavily_key=os.getenv("WEB_SEARCH_TAVILY_KEY", ""),
             web_search_serpapi_key=os.getenv("WEB_SEARCH_SERPAPI_KEY", ""),
             chunk_size=int(os.getenv("CHUNK_SIZE", "1200")),
@@ -116,6 +119,9 @@ class Settings:
             feedback_boost_factor=float(os.getenv("FEEDBACK_BOOST_FACTOR", "0.3")),
             vector_store_type=os.getenv("VECTOR_STORE_TYPE", "pinecone"),
             vector_store_chroma_dir=_resolve_path(os.getenv("VECTOR_STORE_CHROMA_DIR", ".vector_db")),
+            local_retrieval_enabled=os.getenv("LOCAL_RETRIEVAL_ENABLED", "true").lower() == "true",
+            local_retrieval_max_results=int(os.getenv("LOCAL_RETRIEVAL_MAX_RESULTS", "3")),
+            local_retrieval_min_score=float(os.getenv("LOCAL_RETRIEVAL_MIN_SCORE", "0.3")),
         )
 
     def validate_required(self) -> tuple[bool, list[str]]:

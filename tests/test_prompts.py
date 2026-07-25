@@ -63,6 +63,9 @@ def _make_settings(**overrides):
         feedback_boost_factor=0.3,
         vector_store_type="pinecone",
         vector_store_chroma_dir=".vector_db",
+        local_retrieval_enabled=True,
+        local_retrieval_max_results=3,
+        local_retrieval_min_score=0.3,
     )
     defaults.update(overrides)
     return Settings(**defaults)

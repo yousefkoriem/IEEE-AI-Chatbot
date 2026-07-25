@@ -16,13 +16,13 @@ def search_web_snippets(question: str, max_results: int, timeout_seconds: int, s
     if not question.strip():
         return []
 
-    provider = (settings.web_search_provider or "duckduckgo") if settings else "duckduckgo"
+    provider = (settings.web_search_provider or "google") if settings else "google"
     registry = _get_provider_registry()
     func = registry.get(provider)
     if func:
         return func(question, max_results, timeout_seconds, settings)
-    logger.warning("Unknown search provider '%s', falling back to DuckDuckGo", provider)
-    return _search_duckduckgo(question, max_results, timeout_seconds, settings)
+    logger.warning("Unknown search provider '%s', falling back to Google", provider)
+    return _search_google(question, max_results, timeout_seconds, settings)
 
 
 def _search_duckduckgo(question: str, max_results: int, timeout_seconds: int, settings: Settings | None = None) -> list[Document]:
@@ -107,8 +107,53 @@ def _search_serpapi(question: str, max_results: int, timeout_seconds: int, setti
         return _search_duckduckgo(question, max_results, timeout_seconds, settings)
 
 
+def _search_google(question: str, max_results: int, timeout_seconds: int, settings: Settings | None = None) -> list[Document]:
+    response = requests.get(
+        "https://www.google.com/search",
+        params={"q": question, "num": max_results},
+        timeout=timeout_seconds,
+        headers={
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36",
+            "Accept-Language": "en-US,en;q=0.9",
+        },
+    )
+    response.raise_for_status()
+
+    soup = BeautifulSoup(response.text, "html.parser")
+    documents: list[Document] = []
+
+    for result in soup.select("div.g"):
+        title_anchor = result.select_one("a")
+        if not title_anchor:
+            continue
+        href = title_anchor.get("href", "")
+        if not href.startswith("http"):
+            continue
+
+        title_el = title_anchor.select_one("h3")
+        title = title_el.get_text(" ", strip=True) if title_el else ""
+
+        snippet_el = result.select_one("div[data-sncf], div.VwiC3b, span.aCOpRe")
+        snippet = snippet_el.get_text(" ", strip=True) if snippet_el else ""
+
+        content = f"Title: {title}\nSnippet: {snippet}".strip()
+        documents.append(Document(
+            page_content=content,
+            metadata={"source": href, "url": href, "filename": href, "origin": "web-search", "title": title},
+        ))
+        if len(documents) >= max_results:
+            break
+
+    if not documents:
+        logger.info("Google scraping returned no results, falling back to DuckDuckGo")
+        return _search_duckduckgo(question, max_results, timeout_seconds, settings)
+
+    return documents
+
+
 def _get_provider_registry() -> dict:
     return {
+        "google": _search_google,
         "duckduckgo": _search_duckduckgo,
         "tavily": _search_tavily,
         "serpapi": _search_serpapi,

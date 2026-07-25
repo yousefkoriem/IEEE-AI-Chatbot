@@ -12,6 +12,7 @@ from langsmith import traceable, Client as LangSmithClient
 from langsmith.run_helpers import get_current_run_tree
 
 from .config import Settings, configure_langsmith, langsmith_status
+from .local_retrieval import LocalRetriever
 from .prompts import build_prompt_config, build_system_prompt, build_user_prompt
 from .retrieval import search_web_snippets
 from .vectorstore import get_vector_store
@@ -28,6 +29,7 @@ class RAGAgent:
         configure_langsmith(settings)
         self.ls_client = LangSmithClient() if settings.langsmith_tracing else None
         self._vectorstore = get_vector_store(settings)
+        self._local_retriever = LocalRetriever(settings)
         self._llm = self._build_llm(settings.chat_model)
         self._fallback_llm: ChatGoogleGenerativeAI | None = None
         self._get_chunk_boosts = get_chunk_boosts or (lambda: {})
@@ -279,19 +281,29 @@ class RAGAgent:
 
     @traceable(run_type="retriever", name="retrieve_docs")
     def _retrieve_docs(self, question: str) -> tuple[list[Any], str]:
+        if self.settings.local_retrieval_enabled:
+            try:
+                local_docs = self._local_retriever.search(
+                    question,
+                    max_results=self.settings.local_retrieval_max_results,
+                    min_score=self.settings.local_retrieval_min_score,
+                )
+                if local_docs:
+                    return local_docs, "Local"
+            except Exception:
+                logger.exception("Local retrieval failed for question: %.100s", question)
+
         docs = []
         confidence = "Low"
         try:
             results = self._vectorstore.similarity_search_with_score(
-                question, 
+                question,
                 k=self.settings.retriever_k
             )
             if results:
                 docs = [doc for doc, score in results]
                 scores = [score for doc, score in results]
                 avg_score = sum(scores) / len(scores)
-                # Pinecone cosine similarity: 1.0 = exact match, 0.0 = unrelated.
-                # Typical relevant content scores 0.60–0.85 for domain-specific RAG.
                 if avg_score > 0.75:
                     confidence = "High"
                 elif avg_score > 0.60:
@@ -306,14 +318,14 @@ class RAGAgent:
                             chunk_id = doc.metadata.get("chunk_id", "")
                             boost = boosts.get(chunk_id, 0.0)
                             if boost > 0:
-                                pass  # re-rank by adjusted score
+                                pass
                             boosted_docs.append((doc, score * (1 + factor * max(boost, 0))))
                         boosted_docs.sort(key=lambda x: x[1], reverse=True)
                         docs = [doc for doc, _ in boosted_docs]
                         scores = [score for _, score in boosted_docs]
                         avg_score = sum(scores) / len(scores)
         except Exception:
-            logger.exception("Retriever failed for question: %.100s", question)
+            logger.exception("Pinecone retriever failed for question: %.100s", question)
             docs = []
 
         if docs:
@@ -329,7 +341,9 @@ class RAGAgent:
                 timeout_seconds=self.settings.web_search_timeout_seconds,
                 settings=self.settings,
             )
-            return docs, "Web Search"
+            if docs:
+                return docs, "Web Search"
+            return [], "None"
         except Exception:
             logger.exception("Web search fallback failed for question: %.100s", question)
             return [], "None"
@@ -345,6 +359,8 @@ class RAGAgent:
             "max_output_tokens": str(self.settings.max_output_tokens),
             "embedding": self.settings.embedding_model,
             "pinecone_index": self.settings.pinecone_index_name,
+            "local_retrieval": "enabled" if self.settings.local_retrieval_enabled else "disabled",
             "internet_fallback": "enabled" if self.settings.internet_fallback_enabled else "disabled",
+            "web_search_provider": self.settings.web_search_provider,
             **{f"langsmith_{k}": v for k, v in langsmith_status(self.settings).items()},
         }
