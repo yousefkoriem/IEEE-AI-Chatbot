@@ -136,8 +136,17 @@ def get_vector_store(settings: Settings) -> Any:
             try:
                 return FAISS.load_local(persist_dir, embeddings, allow_dangerous_deserialization=True)
             except Exception:
-                texts = ["initialization placeholder"]
+                # Create store with a temporary placeholder, then remove it
+                # to avoid polluting search results.
+                texts = ["__INIT_PLACEHOLDER__"]
                 store = FAISS.from_texts(texts, embeddings)
+                # Remove the placeholder document
+                try:
+                    placeholder_ids = list(store.index_to_docstore_id.values())
+                    if placeholder_ids:
+                        store.delete(placeholder_ids)
+                except Exception:
+                    pass  # Newer FAISS versions may handle this differently
                 store.save_local(persist_dir)
                 return store
         except ImportError:

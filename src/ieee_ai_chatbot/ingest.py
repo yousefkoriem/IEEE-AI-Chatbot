@@ -55,11 +55,22 @@ def _extract_ppt_text(path: Path) -> str:
     presentation = Presentation(str(path))
     blocks: list[str] = []
     for slide in presentation.slides:
+        slide_title = ""
+        slide_texts: list[str] = []
         for shape in slide.shapes:
             text = getattr(shape, "text", "")
-            if text:
-                blocks.append(text)
-    return "\n".join(blocks).strip()
+            if not text:
+                continue
+            # Identify slide title shape
+            if hasattr(shape, "has_text_frame") and shape == getattr(slide.shapes, "title", None):
+                slide_title = text
+            else:
+                slide_texts.append(text)
+        if slide_title:
+            blocks.append(f"## {slide_title}\n" + "\n".join(slide_texts))
+        elif slide_texts:
+            blocks.append("\n".join(slide_texts))
+    return "\n\n".join(blocks).strip()
 
 
 def _extract_docx_text(path: Path) -> str:
@@ -203,6 +214,7 @@ def ingest_files(settings: Settings, file_paths: list[str], origin: str = "local
     splitter = RecursiveCharacterTextSplitter(
         chunk_size=settings.chunk_size,
         chunk_overlap=settings.chunk_overlap,
+        separators=["\n## ", "\n### ", "\n\n", "\n|", "\n- ", "\n", " ", ""],
     )
     manifest_path = Path(settings.manifest_path)
     manifest = _load_manifest(manifest_path)
@@ -313,6 +325,7 @@ def ingest_website(settings: Settings, start_url: str, max_pages: int = 25) -> d
     splitter = RecursiveCharacterTextSplitter(
         chunk_size=settings.chunk_size,
         chunk_overlap=settings.chunk_overlap,
+        separators=["\n## ", "\n### ", "\n\n", "\n|", "\n- ", "\n", " ", ""],
     )
     manifest_path = Path(settings.manifest_path)
     manifest = _load_manifest(manifest_path)
@@ -429,6 +442,7 @@ def ingest_text(settings: Settings, text: str, source_name: str, origin: str = "
     splitter = RecursiveCharacterTextSplitter(
         chunk_size=settings.chunk_size,
         chunk_overlap=settings.chunk_overlap,
+        separators=["\n## ", "\n### ", "\n\n", "\n|", "\n- ", "\n", " ", ""],
     )
 
     manifest_path = Path(settings.manifest_path)

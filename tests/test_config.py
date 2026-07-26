@@ -29,6 +29,7 @@ def _make_settings(**overrides):
         embedding_model_fallback="models/gemini-embedding-001",
         retriever_k=3,
         retriever_fetch_k=10,
+        retriever_min_score=0.40,
         internet_fallback_enabled=True,
         web_search_results=3,
         web_search_timeout_seconds=8,

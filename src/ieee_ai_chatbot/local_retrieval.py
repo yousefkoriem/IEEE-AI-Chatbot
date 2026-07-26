@@ -40,8 +40,13 @@ def _keyword_overlap_score(query_tokens: list[str], chunk_text: str) -> float:
 
 
 def _fuzzy_score(question: str, chunk_text: str) -> float:
-    sample = chunk_text[:2000]
-    return SequenceMatcher(None, question.lower(), sample.lower()).ratio()
+    q_lower = question.lower()
+    # Compare against individual sentences for more meaningful ratios
+    sentences = [s.strip() for s in chunk_text.split('.') if len(s.strip()) > 10]
+    if not sentences:
+        return SequenceMatcher(None, q_lower, chunk_text[:500].lower()).ratio()
+    # Take the best match across sentences (cap at 20 to limit compute)
+    return max(SequenceMatcher(None, q_lower, s.lower()).ratio() for s in sentences[:20])
 
 
 def _combined_score(question: str, chunk_text: str, query_tokens: list[str]) -> float:

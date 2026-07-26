@@ -116,11 +116,27 @@ class RAGAgent:
                 "or increase quota. Consider setting CHAT_MODEL=gemini-2.5-flash-lite."
             ) from first_error
 
+    @staticmethod
+    def _build_labeled_context(docs: list) -> str:
+        """Build context string with source labels so the LLM knows provenance."""
+        chunks: list[str] = []
+        for doc in docs:
+            filename = doc.metadata.get("filename", "unknown")
+            chunks.append(f"[Source: {filename}]\n{doc.page_content}")
+        return "\n\n---\n\n".join(chunks)
+
     def _annotate_citations(self, answer_text: str, docs: list) -> tuple[str, list[dict]]:
-        """Append numbered source references after the answer.
+        """Append numbered source references only for docs that influenced the answer.
         Returns (answer_with_footnotes, list of unique source dicts)."""
+        answer_lower = answer_text.lower()
+        answer_words = set(re.findall(r'\b\w{4,}\b', answer_lower))
         source_map: list[dict] = []
         for doc in docs:
+            # Only cite if meaningful content overlap exists with the answer
+            content_words = set(re.findall(r'\b\w{4,}\b', doc.page_content.lower()))
+            overlap = len(content_words & answer_words)
+            if overlap < 3:
+                continue
             source_id = doc.metadata.get("id", str(id(doc)))[:12]
             filename = doc.metadata.get("filename", "unknown")
             existing = {s["id"] for s in source_map}
@@ -139,10 +155,9 @@ class RAGAgent:
     @traceable(run_type="chain", name="rag_answer")
     def answer(self, question: str, history_text: str = "", generate_suggestions: bool = False) -> tuple[str, list[str], str, str, list[str], list[str]]:
         docs, confidence = self._retrieve_docs(question)
-        context_chunks = [doc.page_content for doc in docs]
         sources = [str(doc.metadata.get("filename", "unknown")) for doc in docs]
         chunk_ids_used = [str(doc.metadata.get("chunk_id", "")) for doc in docs if doc.metadata.get("chunk_id")]
-        context = "\n\n".join(context_chunks)
+        context = self._build_labeled_context(docs)
         prompt = build_user_prompt(
             question=question,
             history_text=history_text,
@@ -186,11 +201,10 @@ class RAGAgent:
     @traceable(run_type="chain", name="rag_answer_stream")
     def answer_stream(self, question: str, history_text: str = ""):
         docs, confidence = self._retrieve_docs(question)
-        context_chunks = [doc.page_content for doc in docs]
         sources = [str(doc.metadata.get("filename", "unknown")) for doc in docs]
         sources = list(dict.fromkeys(sources))
         chunk_ids_used = [str(doc.metadata.get("chunk_id", "")) for doc in docs if doc.metadata.get("chunk_id")]
-        context = "\n\n".join(context_chunks)
+        context = self._build_labeled_context(docs)
         prompt = build_user_prompt(
             question=question,
             history_text=history_text,
@@ -226,11 +240,10 @@ class RAGAgent:
 
     async def answer_stream_async(self, question: str, history_text: str = ""):
         docs, confidence = self._retrieve_docs(question)
-        context_chunks = [doc.page_content for doc in docs]
         sources = [str(doc.metadata.get("filename", "unknown")) for doc in docs]
         sources = list(dict.fromkeys(sources))
         chunk_ids_used = [str(doc.metadata.get("chunk_id", "")) for doc in docs if doc.metadata.get("chunk_id")]
-        context = "\n\n".join(context_chunks)
+        context = self._build_labeled_context(docs)
         prompt = build_user_prompt(
             question=question,
             history_text=history_text,
@@ -301,6 +314,12 @@ class RAGAgent:
                 if len(unique_results) >= self.settings.retriever_k:
                     break
 
+            # Filter out chunks below minimum similarity threshold
+            unique_results = [
+                (doc, score) for doc, score in unique_results
+                if score >= self.settings.retriever_min_score
+            ]
+
             if unique_results:
                 if self.settings.feedback_boost_enabled:
                     boosts = self._get_chunk_boosts()
@@ -340,44 +359,8 @@ class RAGAgent:
             except Exception:
                 logger.exception("Local retrieval failed for question: %.100s", question)
 
-        docs = []
-        confidence = "Low"
-        try:
-            results = self._vectorstore.similarity_search_with_score(
-                question,
-                k=self.settings.retriever_k
-            )
-            if results:
-                docs = [doc for doc, score in results]
-                scores = [score for doc, score in results]
-                avg_score = sum(scores) / len(scores)
-                if avg_score > 0.75:
-                    confidence = "High"
-                elif avg_score > 0.60:
-                    confidence = "Medium"
-
-                if self.settings.feedback_boost_enabled:
-                    boosts = self._get_chunk_boosts()
-                    if boosts:
-                        factor = self.settings.feedback_boost_factor
-                        boosted_docs: list[Any] = []
-                        for doc, score in results:
-                            chunk_id = doc.metadata.get("chunk_id", "")
-                            boost = boosts.get(chunk_id, 0.0)
-                            if boost > 0:
-                                pass
-                            boosted_docs.append((doc, score * (1 + factor * max(boost, 0))))
-                        boosted_docs.sort(key=lambda x: x[1], reverse=True)
-                        docs = [doc for doc, _ in boosted_docs]
-                        scores = [score for _, score in boosted_docs]
-                        avg_score = sum(scores) / len(scores)
-        except Exception:
-            logger.exception("Pinecone retriever failed for question: %.100s", question)
-            docs = []
-
-        if docs:
-            return docs, confidence
-
+        # Web search fallback (disabled by default to prevent external data
+        # from overriding correct Pinecone results)
         if not self.settings.internet_fallback_enabled:
             return [], ""
 

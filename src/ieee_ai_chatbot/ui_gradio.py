@@ -694,6 +694,31 @@ def _user_requested_sources(message: str) -> bool:
     return any(trigger in prompt for trigger in source_triggers)
 
 
+def _strip_ui_artifacts(text: str) -> str:
+    """Remove confidence badges, references, and follow-up chips before saving to history.
+
+    The display message includes emojis, 📚 References blocks, and follow-up
+    suggestions that are useful in the UI but pollute the LLM context when
+    fed back as conversation history on subsequent turns.
+    """
+    # Remove 📚 References block and everything after
+    refs_idx = text.find("\U0001f4da")
+    if refs_idx != -1:
+        text = text[:refs_idx]
+    # Remove confidence line (🟢/🟡/🔴/🌐 Confidence: ...)
+    import re as _re
+    text = _re.sub(r"\n[\U0001f7e2\U0001f7e1\U0001f534\U0001f310] Confidence: \w+", "", text)
+    # Remove follow-up suggestions block
+    followup_idx = text.find("\nFollow-up:\n")
+    if followup_idx != -1:
+        text = text[:followup_idx]
+    # Remove Sources: block (duplicate appended by UI)
+    sources_idx = text.find("\nSources:\n")
+    if sources_idx != -1:
+        text = text[:sources_idx]
+    return text.strip()
+
+
 def _history_to_text(history: list[dict[str, str]] | list[list[str]] | None) -> str:
     if not history:
         return ""
@@ -818,7 +843,7 @@ def create_demo() -> gr.Blocks:
 
         chat_history_mgr.auto_title(conv_id, message)
         chat_history_mgr.add_message(conv_id, "user", message)
-        chat_history_mgr.add_message(conv_id, "assistant", answer)
+        chat_history_mgr.add_message(conv_id, "assistant", _strip_ui_artifacts(answer))
 
         if sources and _user_requested_sources(message):
             source_text = "\n".join(f"- {source}" for source in sources[:8])
@@ -1284,7 +1309,7 @@ def create_demo() -> gr.Blocks:
                                     sep = "\n- "
                                     msg += "\n\nFollow-up:\n- " + sep.join(safe)
                             history[-1]["content"] = msg
-                            chat_history_mgr.add_message(conv_id, "assistant", msg)
+                            chat_history_mgr.add_message(conv_id, "assistant", _strip_ui_artifacts(msg))
                             yield history, run_id, sources, final_confidence, conv_id, final_suggestions, chunk_ids
 
                         def share_last_answer(history, sources, confidence):
@@ -1429,7 +1454,7 @@ def create_demo() -> gr.Blocks:
                                     sep = "\n- "
                                     msg += "\n\nFollow-up:\n- " + sep.join(safe)
                             history[-1]["content"] = msg
-                            chat_history_mgr.add_message(conv_id, "assistant", msg)
+                            chat_history_mgr.add_message(conv_id, "assistant", _strip_ui_artifacts(msg))
                             yield history, run_id, sources, final_confidence, conv_id, final_suggestions, chunk_ids
 
                         regenerate_btn.click(
