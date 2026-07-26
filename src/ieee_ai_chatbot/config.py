@@ -94,7 +94,7 @@ class Settings:
             embedding_model_fallback=os.getenv("EMBEDDING_MODEL_FALLBACK", "models/gemini-embedding-001"),
             retriever_k=int(os.getenv("RETRIEVER_K", "5")),
             retriever_fetch_k=int(os.getenv("RETRIEVER_FETCH_K", "10")),
-            retriever_min_score=float(os.getenv("RETRIEVER_MIN_SCORE", "0.40")),
+            retriever_min_score=float(os.getenv("RETRIEVER_MIN_SCORE", "0.15")),
             internet_fallback_enabled=os.getenv("INTERNET_FALLBACK_ENABLED", "false").lower() == "true",
             web_search_results=int(os.getenv("WEB_SEARCH_RESULTS", "3")),
             web_search_timeout_seconds=int(os.getenv("WEB_SEARCH_TIMEOUT_SECONDS", "8")),

@@ -1300,7 +1300,7 @@ def create_demo() -> gr.Blocks:
                                 if sources and _user_requested_sources(history[-2]["content"] if len(history) >= 2 else ""):
                                     src_text = "\n".join(f"- {s}" for s in sources[:8])
                                     msg += "\n\nSources:\n" + src_text
-                            if final_confidence:
+                            if final_confidence and final_confidence in ("High", "Medium", "Low", "Web Search"):
                                 emoji = "\U0001f7e2" if final_confidence == "High" else "\U0001f7e1" if final_confidence == "Medium" else "\U0001f534" if final_confidence == "Low" else "\U0001f310"
                                 msg += "\n" + emoji + " Confidence: " + final_confidence
                             if isinstance(final_suggestions, list) and final_suggestions and not has_refs:
@@ -1445,7 +1445,7 @@ def create_demo() -> gr.Blocks:
                                 if sources and _user_requested_sources(history[-2]["content"] if len(history) >= 2 else ""):
                                     src_text = "\n".join(f"- {s}" for s in sources[:8])
                                     msg += "\n\nSources:\n" + src_text
-                            if final_confidence:
+                            if final_confidence and final_confidence in ("High", "Medium", "Low", "Web Search"):
                                 emoji = "\U0001f7e2" if final_confidence == "High" else "\U0001f7e1" if final_confidence == "Medium" else "\U0001f534" if final_confidence == "Low" else "\U0001f310"
                                 msg += "\n" + emoji + " Confidence: " + final_confidence
                             if isinstance(final_suggestions, list) and final_suggestions and not has_refs:

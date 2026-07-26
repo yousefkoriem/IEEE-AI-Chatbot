@@ -35,7 +35,7 @@ def _agent(vector_results, local_docs=(), boosts=None):
     agent.settings = SimpleNamespace(
         retriever_k=3,
         retriever_fetch_k=5,
-        retriever_min_score=0.40,
+        retriever_min_score=0.15,
         feedback_boost_enabled=bool(boosts),
         feedback_boost_factor=0.3,
         local_retrieval_enabled=True,

@@ -315,6 +315,13 @@ class RAGAgent:
                     break
 
             # Filter out chunks below minimum similarity threshold
+            pre_filter_count = len(unique_results)
+            if unique_results:
+                scores_before = [s for _, s in unique_results]
+                logger.debug(
+                    "Pinecone returned %d unique chunks for '%.60s', scores: %s (min_score=%.2f)",
+                    pre_filter_count, question, scores_before, self.settings.retriever_min_score,
+                )
             unique_results = [
                 (doc, score) for doc, score in unique_results
                 if score >= self.settings.retriever_min_score
