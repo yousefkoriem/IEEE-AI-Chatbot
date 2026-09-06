@@ -4,7 +4,7 @@ emoji: 🤖
 colorFrom: blue
 colorTo: indigo
 sdk: gradio
-sdk_version: 6.20.0
+sdk_version: 6.26.0
 python_version: "3.11"
 app_file: app.py
 pinned: false
@@ -23,21 +23,15 @@ RAG chatbot for answering questions about IEEE Beni Suef Student Branch using:
 ## Project structure
 
 ```text
-app.py               ← Gradio UI + REST API (HF Spaces entry point)
-app_api.py           ← Standalone FastAPI server (separate port, dev/CI)
-src/ieee_ai_chatbot/
-    api.py           ← REST router (mountable on Gradio or standalone)
-    chat.py
-    config.py
-    vectorstore.py
-    ingest.py
-    retrieval.py
-    prompts.py
-    ui_gradio.py
-    chat_history.py
-    rate_limiter.py
-tests/
-docs/
+app.py                    # Application entry point
+config/                   # Environment variables and configuration
+models/                   # Gemini Flash and Flash-Lite models
+prompts/                  # System prompts
+agent/                    # LangGraph agent and state
+rag/                      # Embeddings, Pinecone, retrieval, ingestion
+ui/                       # Gradio interface
+utils/                    # Logging and shared helpers
+evaluation/               # RAG and LangSmith evaluation
 ```
 
 ## REST API
